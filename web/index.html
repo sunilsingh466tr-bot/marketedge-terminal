@@ -844,7 +844,7 @@
       <span style="font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono);" id="header-date">As of -- • Source: --</span>
     </div>
 
-    <!-- TOP BENCHMARK TICKERS (LOADED EXCLUSIVELY FROM /api/market) -->
+    <!-- TOP BENCHMARK TICKERS (LOADED EXCLUSIVELY FROM data/market.json) -->
     <div class="ticker-bar" id="ticker-bar">
       <div class="ticker-item" id="ticker-nifty50">
         <span class="ticker-label">NIFTY 50:</span>
@@ -875,7 +875,7 @@
     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 1540px; margin: 0 auto; gap: 12px; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 8px;">
         <span id="pipeline-banner-icon" style="font-size: 15px;">⏳</span>
-        <span id="pipeline-banner-text">Loading /api/market...</span>
+        <span id="pipeline-banner-text">Loading data/market.json...</span>
       </div>
       <button id="pipeline-banner-retry" class="stream-btn" onclick="loadMarketData(true)" style="display: none;">🔄 Retry Fetch</button>
     </div>
@@ -885,14 +885,14 @@
   <div class="stream-control-bar">
     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
       <div class="stream-status-pill" id="eod-status-pill">
-        <span id="eod-status-text">EOD SESSION • LOADING /api/market</span>
+        <span id="eod-status-text">EOD SESSION • LOADING data/market.json</span>
       </div>
-      <span style="color: var(--text-secondary);" id="eod-cache-status">Cache: --</span>
+      <span style="color: var(--text-secondary);" id="eod-cache-status">Snapshot: --</span>
     </div>
 
     <div class="stream-controls-group">
       <span style="color: var(--text-tertiary);" id="eod-provenance-inline">As of -- • Source: --</span>
-      <button class="stream-btn" onclick="loadMarketData(true)">🔄 Refresh /api/market</button>
+      <button class="stream-btn" onclick="loadMarketData(true)">🔄 Reload Snapshot</button>
     </div>
   </div>
 
@@ -965,7 +965,7 @@
               <span style="color: var(--cyan-rs); font-size: 10px;">ZERO-CENTERED DIVERGING</span>
             </div>
             <div id="fii-dii-bars">
-              <div style="padding: 16px; text-align: center; color: var(--text-tertiary); font-size: 12px;">Waiting for /api/market...</div>
+              <div style="padding: 16px; text-align: center; color: var(--text-tertiary); font-size: 12px;">Waiting for data/market.json...</div>
             </div>
           </div>
         </div>
@@ -975,14 +975,14 @@
           <div class="panel-header">
             <div>
               <div class="panel-title">Today's Market Pulse & Key Bullet Points</div>
-              <div class="panel-subtitle">Derived strictly from backend EOD & exchange telemetry</div>
+              <div class="panel-subtitle">Derived strictly from EOD & exchange telemetry</div>
               <div class="panel-provenance" id="bullets-provenance">As of -- • Source: --</div>
             </div>
             <span style="font-size: 11px; font-weight: 700; color: var(--cyan-rs);" id="bullets-badge">-- BULLETS</span>
           </div>
 
           <div id="bullets-list" style="max-height: 640px; overflow-y: auto; padding-right: 4px;">
-            <div style="padding: 20px; text-align: center; color: var(--text-tertiary); font-size: 12px;">Waiting for /api/market...</div>
+            <div style="padding: 20px; text-align: center; color: var(--text-tertiary); font-size: 12px;">Waiting for data/market.json...</div>
           </div>
         </div>
 
@@ -1149,7 +1149,7 @@
 
   </main>
 
-  <!-- MODAL DOSSIER FOR STOCK DETAIL WITH REAL /api/history/:symbol CHART -->
+  <!-- MODAL DOSSIER FOR STOCK DETAIL WITH REAL data/history/<SYMBOL>.json CHART -->
   <div class="modal-overlay" id="stock-modal" onclick="closeModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
       <button class="modal-close" onclick="closeModalDirect()">✕</button>
@@ -1185,7 +1185,7 @@
     let currentViewMode = 'cards';
 
     let activeStockSymbol = '';
-    let activeStockCandles = []; // Full indicator-enriched real bars from /api/history/:symbol
+    let activeStockCandles = []; // Full indicator-enriched real bars from data/history/<SYMBOL>.json
     let selectedTimeframe = '3M';
     let selectedIndicator = 'ALL';
     let currentModalBenchmark = 'relevant';
@@ -1310,34 +1310,22 @@
     }
 
     // -------------------------------------------------------------
-    // API FETCH HELPERS (WITH ANDROID WEBVIEW BASE URL SUPPORT)
+    // STATIC DATA FETCH HELPERS (RELATIVE PATHS, NO SERVER REQUIRED)
     // -------------------------------------------------------------
-    function getApiBases() {
-      if (window.location.protocol === 'file:') {
-        return ['http://10.0.2.2:3000', 'http://localhost:3000'];
-      }
-      return [''];
+    function sanitizeHistorySymbol(symbol) {
+      return String(symbol || '').trim().replace(/[^A-Za-z0-9_-]/g, '_');
     }
 
-    async function apiFetchJson(endpoint) {
-      const bases = getApiBases();
-      let lastErr = null;
-      for (const base of bases) {
-        try {
-          const resp = await fetch(`${base}${endpoint}`, { cache: 'no-store' });
-          if (!resp.ok) {
-            throw new Error(`HTTP ${resp.status}`);
-          }
-          return await resp.json();
-        } catch (err) {
-          lastErr = err;
-        }
+    async function fetchStaticJson(relativePath) {
+      const resp = await fetch(relativePath, { cache: 'no-store' });
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
       }
-      throw lastErr || new Error('API request failed');
+      return await resp.json();
     }
 
     // -------------------------------------------------------------
-    // BOOTSTRAP: LOAD /api/market ON PAGE LOAD
+    // BOOTSTRAP: LOAD data/market.json ON PAGE LOAD
     // -------------------------------------------------------------
     document.addEventListener("DOMContentLoaded", () => {
       renderTheses();
@@ -1345,14 +1333,13 @@
     });
 
     async function loadMarketData(forceRefresh = false) {
-      showBanner('info', '⏳ Fetching EOD market data from /api/market...', false);
+      showBanner('info', '⏳ Fetching EOD market data from data/market.json...', false);
 
       try {
-        const endpoint = forceRefresh ? '/api/market?refresh=1' : '/api/market';
-        const data = await apiFetchJson(endpoint);
+        const data = await fetchStaticJson('data/market.json');
 
         if (!data || !data.meta || !Array.isArray(data.stocks) || !Array.isArray(data.indices)) {
-          throw new Error('Malformed payload from /api/market');
+          throw new Error('Malformed payload from data/market.json');
         }
 
         MARKET_DATA = data;
@@ -1395,10 +1382,10 @@
         renderIndices();
 
         if (forceRefresh) {
-          showToast(`Market data refreshed (Session: ${sessionDate})`, "success");
+          showToast(`Market snapshot reloaded (Session: ${sessionDate})`, "success");
         }
       } catch (err) {
-        console.error('Failed to load /api/market:', err);
+        console.error('Failed to load data/market.json:', err);
         MARKET_DATA = null;
         STOCKS = [];
         INDICES = [];
@@ -1438,7 +1425,7 @@
         <div style="grid-column: 1 / -1; padding: 32px; text-align: center; background: var(--red-bg); border: 1px dashed var(--red); border-radius: 10px;">
           <strong style="color: var(--red);">Data stale / unavailable</strong>
           <p style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">${escapeHtml(errMsg)}</p>
-          <button class="theme-btn" onclick="loadMarketData(true)" style="margin-top: 12px;">🔄 Retry /api/market</button>
+          <button class="theme-btn" onclick="loadMarketData(true)" style="margin-top: 12px;">🔄 Retry data/market.json</button>
         </div>
       `;
       ["screener-cards-grid", "results-cards-grid", "indices-grid"].forEach(id => {
@@ -1472,10 +1459,8 @@
       setTxt("footer-time", `Generated ${formatISTDateTime(m.generatedAt)} • ${mainProv}`);
 
       const cacheInfo = m.fromSnapshot
-        ? 'Served from disk snapshot (live refresh degraded)'
-        : m.cacheHit
-          ? `Memory cache hit (${m.cacheAgeSeconds}s old, 15m TTL)`
-          : 'Freshly fetched & saved to disk snapshot';
+        ? 'Served from previous snapshot (live refresh degraded)'
+        : `Static EOD snapshot (${m.generatedAtIST || formatISTDateTime(m.generatedAt)})`;
       setTxt("eod-cache-status", cacheInfo);
       setTxt("eod-status-text", `EOD SESSION SETTLED (${m.sessionDate || '--'})`);
 
@@ -1911,7 +1896,7 @@
     }
 
     // -------------------------------------------------------------
-    // STOCK DOSSIER MODAL + QUANT COMPARISON + REAL /api/history/:symbol
+    // STOCK DOSSIER MODAL + QUANT COMPARISON + REAL data/history/<SYMBOL>.json
     // -------------------------------------------------------------
     async function openStockModal(symbol) {
       const stock = STOCKS.find(s => s.symbol === symbol);
@@ -1961,7 +1946,7 @@
           </div>
         </div>
 
-        <!-- REAL DAILY OHLCV CANDLESTICK CHART FROM /api/history/:symbol -->
+        <!-- REAL DAILY OHLCV CANDLESTICK CHART FROM data/history/<SYMBOL>.json -->
         <div class="chart-box">
           <div class="chart-legend" style="margin-bottom: 6px;">
             <div id="chart-inspection-info" style="display: flex; gap: 10px; font-size: 11px; flex-wrap: wrap;">
@@ -1989,7 +1974,7 @@
           </div>
 
           <div id="chart-loading-state" style="padding: 40px; text-align: center; font-size: 12px; color: var(--text-secondary);">
-            ⏳ Loading real daily OHLCV bars from /api/history/${escapeHtml(stock.symbol)}...
+            ⏳ Loading real daily OHLCV bars from data/history/${escapeHtml(sanitizeHistorySymbol(stock.symbol))}.json...
           </div>
           <canvas id="candlestick-canvas" style="display: none; cursor: crosshair;"></canvas>
         </div>
@@ -2068,13 +2053,15 @@
       document.getElementById("stock-modal").classList.add("active");
       renderQuantSection(stock, 'relevant');
 
-      // Fetch real OHLCV history from /api/history/:symbol (and Nifty 500 if not cached for RS line)
+      // Fetch real OHLCV history from data/history/<SYMBOL>.json (and Nifty 500 _CRSLDX.json for RS line)
       try {
+        const histPath = `data/history/${sanitizeHistorySymbol(stock.symbol)}.json`;
+        const n500Path = `data/history/${sanitizeHistorySymbol('^CRSLDX')}.json`;
         const [histResp, n500Resp] = await Promise.all([
-          apiFetchJson(`/api/history/${encodeURIComponent(stock.symbol)}`),
+          fetchStaticJson(histPath),
           NIFTY500_HISTORY_MAP.size > 0
             ? Promise.resolve(null)
-            : apiFetchJson(`/api/history/${encodeURIComponent('^CRSLDX')}`).catch(() => null)
+            : fetchStaticJson(n500Path).catch(() => null)
         ]);
 
         if (n500Resp && Array.isArray(n500Resp.bars)) {
@@ -2115,7 +2102,7 @@
 
     /**
      * Computes 21 EMA, 50 SMA, 200 SMA, RSI(14), MACD(12,26,9), and RS vs N500
-     * strictly on real OHLCV history returned by /api/history/:symbol.
+     * strictly on real OHLCV history returned by data/history/<SYMBOL>.json.
      */
     function computeIndicatorsFromOHLCV(bars, n500Map) {
       if (!bars || bars.length === 0) return [];
