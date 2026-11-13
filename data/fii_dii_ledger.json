@@ -1,0 +1,60 @@
+[
+  {
+    "date": "2026-11-12",
+    "label": "12 Nov 2026",
+    "fii": 7830.6,
+    "dii": -6331.17,
+    "net": 1499.43,
+    "fiiBuy": 20273.32,
+    "fiiSell": 12442.72,
+    "diiBuy": 15855.13,
+    "diiSell": 22186.3,
+    "note": "Official NSE Daily Turnover",
+    "source": "NSE India (fiidiiTradeReact)"
+  },
+  {
+    "date": "2026-11-11",
+    "label": "11 Nov 2026",
+    "fii": 12563.33,
+    "dii": -8434.53,
+    "net": 4128.8,
+    "note": "Official Close",
+    "source": "NSE Cash Market / Moneycontrol"
+  },
+  {
+    "date": "2026-11-09",
+    "label": "09 Nov 2026",
+    "fii": 7212.22,
+    "dii": -7172.53,
+    "net": 39.69,
+    "note": "Official Close",
+    "source": "NSE Cash Market / Moneycontrol"
+  },
+  {
+    "date": "2026-11-08",
+    "label": "08 Nov 2026",
+    "fii": -0.25,
+    "dii": -700.31,
+    "net": -700.56,
+    "note": "Diwali Muhurat Session (Sun)",
+    "source": "NSE Special Muhurat Session"
+  },
+  {
+    "date": "2026-11-06",
+    "label": "06 Nov 2026",
+    "fii": 13749.82,
+    "dii": -5968.7,
+    "net": 7781.12,
+    "note": "Official Close",
+    "source": "NSE Cash Market / Moneycontrol"
+  },
+  {
+    "date": "2026-11-05",
+    "label": "05 Nov 2026",
+    "fii": 14974.68,
+    "dii": -10444.54,
+    "net": 4530.14,
+    "note": "Official Close",
+    "source": "NSE Cash Market / Moneycontrol"
+  }
+]

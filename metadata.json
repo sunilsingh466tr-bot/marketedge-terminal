@@ -1,0 +1,6 @@
+{
+  "name": "MarketEdge",
+  "description": "Indian Equity Momentum & Fundamental Terminal with Nifty 500 RS Screener, Market Breadth, FII/DII Flows, Earnings Radar, and Research Hub",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
