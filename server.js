@@ -6,7 +6,7 @@
 
 const express = require('express');
 const path = require('path');
-const { getMarketData, getSymbolHistory } = require('./lib/marketService');
+const { getMarketData, getStockDetail, getSymbolHistory } = require('./lib/marketService');
 const { getLatestCompletedSessionDate, formatISTDateTime } = require('./lib/nseCalendar');
 
 const envPort = process.env.PORT;
@@ -49,6 +49,21 @@ app.get('/api/market', async (req, res) => {
         isStale: true,
         source: 'Unavailable'
       }
+    });
+  }
+});
+
+app.get('/api/stock/:symbol', async (req, res) => {
+  try {
+    const detail = await getStockDetail(req.params.symbol);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json(detail);
+  } catch (err) {
+    console.error(`/api/stock/${req.params.symbol} error:`, err.message);
+    res.status(404).json({
+      error: 'Stock detail unavailable',
+      symbol: req.params.symbol,
+      message: err.message
     });
   }
 });

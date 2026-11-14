@@ -2,138 +2,117 @@
 /**
  * scripts/build-static-data.js
  * Static data generator for GitHub Pages (no server required).
- * Loads STOCK_UNIVERSE from config/universe.csv via lib/marketService.js,
- * computes quant/RS metrics, and writes:
- *   - web/data/market.json (including meta.failedSymbols for skipped stocks)
- *   - web/data/history/<SAFE_SYMBOL>.json (every loaded stock + Nifty 500 ^CRSLDX -> _CRSLDX.json)
+ * Uses the rule-based two-stage universe builder & backend quant engine in lib/marketService.js:
+ *   - config/universe.csv (auto-updated & cached monthly for sectors)
+ *   - web/data/market.json (compact table fields + meta with universe size, skipped, and failed lists)
+ *   - web/data/stocks/<SYMBOL>.json (full quant detail & technicals per stock)
+ *   - web/data/history/<SYMBOL>.json (last 300 daily bars per stock + ^CRSLDX -> _CRSLDX.json)
  *
- * Failure policy: Never writes fake or invented numbers. If a data source fails,
- * logs an explicit error and preserves any previously generated file intact.
+ * Respects MAX_STOCKS environment variable for quick test runs.
+ * Failure policy: Never writes fake or invented numbers. Logs errors and preserves previous files intact.
  */
 
 const fs = require('fs');
 const path = require('path');
-const {
-  loadStockUniverse,
-  getMarketData,
-  getSymbolHistory
-} = require('../lib/marketService');
-const { formatISTDateTime } = require('../lib/nseCalendar');
+const { getMarketData } = require('../lib/marketService');
 
 const WEB_DATA_DIR = path.join(__dirname, '..', 'web', 'data');
+const WEB_STOCKS_DIR = path.join(WEB_DATA_DIR, 'stocks');
 const WEB_HISTORY_DIR = path.join(WEB_DATA_DIR, 'history');
 const MARKET_OUT_FILE = path.join(WEB_DATA_DIR, 'market.json');
 
+fs.mkdirSync(WEB_STOCKS_DIR, { recursive: true });
 fs.mkdirSync(WEB_HISTORY_DIR, { recursive: true });
 
 function sanitizeSymbolFilename(symbol) {
   return String(symbol || '').trim().replace(/[^A-Za-z0-9_-]/g, '_');
 }
 
-function writeJsonAtomic(filePath, obj) {
+function writeJsonAtomic(filePath, obj, pretty = false) {
   const tmpPath = `${filePath}.tmp`;
-  fs.writeFileSync(tmpPath, JSON.stringify(obj, null, 2), 'utf-8');
+  const text = pretty ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
+  fs.writeFileSync(tmpPath, text, 'utf-8');
   fs.renameSync(tmpPath, filePath);
 }
 
 async function main() {
-  let hasFatalErrors = false;
   const startedAt = Date.now();
-  const universe = loadStockUniverse();
-  console.log(`Loaded ${universe.length} stocks from config/universe.csv. Building static data in web/data/ ...`);
+  const maxStocks = process.env.MAX_STOCKS ? ` (MAX_STOCKS=${process.env.MAX_STOCKS})` : '';
+  console.log(`Building rule-based NSE static market dataset${maxStocks}...`);
 
-  let failedSet = new Set();
+  const marketData = await getMarketData(true);
 
-  // 1. Fetch & compute full market dataset + quant + RS percentiles via marketService
-  try {
-    const marketData = await getMarketData(true);
-
-    if (
-      !marketData ||
-      !marketData.meta ||
-      marketData.meta.fromSnapshot ||
-      !Array.isArray(marketData.stocks) ||
-      marketData.stocks.length === 0 ||
-      !Array.isArray(marketData.indices) ||
-      marketData.indices.length === 0
-    ) {
-      const reason = marketData?.meta?.liveError || 'Upstream market feed failed or returned fallback snapshot';
-      console.error(`ERROR: Failed to fetch fresh market data (${reason}). Keeping previous web/data/market.json without writing fake numbers.`);
-      hasFatalErrors = true;
-      if (!fs.existsSync(MARKET_OUT_FILE)) {
-        process.exitCode = 1;
-      }
-    } else {
-      const failedSymbols = Array.isArray(marketData.meta.failedSymbols) ? marketData.meta.failedSymbols : [];
-      failedSet = new Set(failedSymbols);
-
-      if (failedSymbols.length > 0) {
-        console.error(`ERROR: Failed to load ${failedSymbols.length} stock(s): ${failedSymbols.join(', ')}. Recorded in meta.failedSymbols and skipped without fake numbers.`);
-      }
-
-      const { cacheHit, cacheAgeSeconds, ...cleanMeta } = marketData.meta;
-      const staticPayload = {
-        ...marketData,
-        meta: {
-          ...cleanMeta,
-          universeTotal: cleanMeta.universeTotal ?? universe.length,
-          universeCount: marketData.stocks.length,
-          failedSymbols
-        }
-      };
-      writeJsonAtomic(MARKET_OUT_FILE, staticPayload);
-      console.log(`Wrote web/data/market.json (${marketData.stocks.length} of ${staticPayload.meta.universeTotal} stocks, ${marketData.indices.length} indices, session ${marketData.meta.sessionDate})`);
-    }
-  } catch (err) {
-    console.error(`ERROR: Market data generation failed (${err.message}). Keeping previous web/data/market.json without writing fake numbers.`);
-    hasFatalErrors = true;
+  if (
+    !marketData ||
+    !marketData.meta ||
+    marketData.meta.fromSnapshot ||
+    !Array.isArray(marketData.stocks) ||
+    marketData.stocks.length === 0 ||
+    !Array.isArray(marketData.indices) ||
+    marketData.indices.length === 0
+  ) {
+    const reason = marketData?.meta?.liveError || 'Upstream market feed failed or returned fallback snapshot';
+    console.error(`ERROR: Failed to build fresh market data (${reason}). Keeping previous web/data/ files without writing fake numbers.`);
     if (!fs.existsSync(MARKET_OUT_FILE)) {
       process.exitCode = 1;
     }
+    return;
   }
 
-  // 2. Write daily OHLCV history for every loaded stock AND Nifty 500 (^CRSLDX -> _CRSLDX.json)
-  const historyTargets = [...universe.map(s => s.symbol), '^CRSLDX'];
+  const failedSymbols = Array.isArray(marketData.meta.failedSymbols) ? marketData.meta.failedSymbols : [];
+  const skippedSymbols = Array.isArray(marketData.meta.skippedSymbols) ? marketData.meta.skippedSymbols : [];
+
+  if (skippedSymbols.length > 0) {
+    console.log(`Skipped ${skippedSymbols.length} stock(s) on history/volume rules (<252 bars or >10% zero-vol).`);
+  }
+  if (failedSymbols.length > 0) {
+    console.error(`ERROR: Failed to fetch ${failedSymbols.length} stock(s) after retries: ${failedSymbols.join(', ')}. Recorded in meta.failedSymbols; preserving previous files if any.`);
+  }
+
+  // 1. Write compact web/data/market.json
+  const { cacheHit, cacheAgeSeconds, ...cleanMeta } = marketData.meta;
+  const staticPayload = {
+    meta: cleanMeta,
+    indices: marketData.indices,
+    stocks: marketData.stocks,
+    fiiDii: marketData.fiiDii,
+    breadth: marketData.breadth,
+    bullets: marketData.bullets,
+    results: marketData.results,
+    earningsRadar: marketData.earningsRadar
+  };
+  writeJsonAtomic(MARKET_OUT_FILE, staticPayload, false);
+
+  // 2. Write web/data/stocks/<SYMBOL>.json (full quant detail per loaded stock)
+  const detailsMap = marketData._detailsBySymbol || new Map();
+  let writtenDetails = 0;
+  for (const [sym, detailObj] of detailsMap.entries()) {
+    const outFile = path.join(WEB_STOCKS_DIR, `${sanitizeSymbolFilename(sym)}.json`);
+    writeJsonAtomic(outFile, detailObj, false);
+    writtenDetails++;
+  }
+
+  // 3. Write web/data/history/<SYMBOL>.json (last 300 daily bars per loaded stock + ^CRSLDX)
+  const historyMap = marketData._historyBySymbol || new Map();
   let writtenHistories = 0;
-
-  for (const sym of historyTargets) {
-    const safeName = sanitizeSymbolFilename(sym);
-    const outFile = path.join(WEB_HISTORY_DIR, `${safeName}.json`);
-
-    if (failedSet.has(sym)) {
-      console.error(`ERROR: Skipping history update for failed symbol ${sym}; keeping previous ${path.relative(process.cwd(), outFile)} if present.`);
-      continue;
-    }
-
-    try {
-      const hist = await getSymbolHistory(sym);
-      if (!hist || hist.fromSnapshot || !Array.isArray(hist.bars) || hist.bars.length === 0) {
-        const reason = hist?.liveError || 'Upstream OHLCV feed failed or returned fallback snapshot';
-        console.error(`ERROR: Failed to fetch live OHLCV for ${sym} (${reason}). Keeping previous ${path.relative(process.cwd(), outFile)}.`);
-        continue;
-      }
-
-      const { cacheHit, ...cleanHist } = hist;
-      if (!cleanHist.asOfDisplay && cleanHist.asOf) {
-        cleanHist.asOfDisplay = formatISTDateTime(cleanHist.asOf);
-      }
-
-      writeJsonAtomic(outFile, cleanHist);
-      writtenHistories++;
-    } catch (err) {
-      console.error(`ERROR: History fetch failed for ${sym} (${err.message}). Keeping previous ${path.relative(process.cwd(), outFile)}.`);
-    }
+  for (const [sym, histObj] of historyMap.entries()) {
+    const outFile = path.join(WEB_HISTORY_DIR, `${sanitizeSymbolFilename(sym)}.json`);
+    writeJsonAtomic(outFile, histObj, false);
+    writtenHistories++;
   }
 
-  const elapsedMs = Date.now() - startedAt;
-  console.log(`Static history files updated: ${writtenHistories}/${historyTargets.length} in ${elapsedMs} ms.`);
-
-  if (hasFatalErrors && !fs.existsSync(MARKET_OUT_FILE)) {
-    process.exitCode = 1;
-  }
+  const elapsedSec = ((Date.now() - startedAt) / 1000).toFixed(1);
+  console.log(
+    `Build complete in ${elapsedSec}s: web/data/market.json (${marketData.stocks.length}/${marketData.meta.universeTotal} stocks, ${skippedSymbols.length} skipped, ${failedSymbols.length} failed), ` +
+    `${writtenDetails} web/data/stocks/*.json, ${writtenHistories} web/data/history/*.json.`
+  );
 }
 
-main().catch(err => {
-  console.error('FATAL build-static-data error:', err);
-  process.exit(1);
-});
+main()
+  .then(() => {
+    process.exit(process.exitCode || 0);
+  })
+  .catch(err => {
+    console.error('FATAL build-static-data error:', err);
+    process.exit(1);
+  });

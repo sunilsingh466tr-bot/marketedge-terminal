@@ -537,9 +537,154 @@
       font-weight: 700;
     }
 
-    /* SCREENER CARDS VIEW */
-    .screener-cards {
+    /* SCREENER FILTER SUITE & ACTIVE THRESHOLDS */
+    .filter-grid {
       display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .filter-box {
+      background: var(--card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filter-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+    .filter-val-badge {
+      color: var(--cyan-rs);
+      font-weight: 800;
+    }
+    .range-slider {
+      width: 100%;
+      accent-color: var(--cyan-rs);
+      cursor: pointer;
+    }
+    .mcap-inputs-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .mcap-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      outline: none;
+    }
+    .mcap-input:focus { border-color: var(--cyan-rs); }
+
+    .sector-ms-wrap {
+      position: relative;
+    }
+    .sector-ms-btn {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
+    }
+    .sector-ms-btn:hover { border-color: var(--cyan-rs); }
+    .sector-ms-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      min-width: 260px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+      z-index: 250;
+      padding: 8px;
+    }
+    .sector-ms-panel.open { display: block; }
+    .sector-ms-list {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .sector-ms-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+    .sector-ms-item:hover { background: var(--card-hover); }
+
+    .active-thresholds-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: var(--card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .threshold-pill {
+      background: var(--cyan-rs-bg);
+      color: var(--cyan-rs);
+      border: 1px solid var(--cyan-rs);
+      border-radius: 12px;
+      padding: 2px 9px;
+      font-weight: 700;
+      font-size: 10.5px;
+    }
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    /* SCREENER CARDS VIEW (CAPPED AT TOP 50 MATCHES) */
+    .screener-cards {
+      display: none;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       gap: 16px;
     }
@@ -615,9 +760,9 @@
       font-weight: 700;
     }
 
-    /* SCREENER TABLE VIEW */
+    /* SCREENER TABLE VIEW (DEFAULT) */
     .screener-table-container {
-      display: none;
+      display: block;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -631,15 +776,26 @@
     }
     table.screener-table th {
       background: var(--card);
-      padding: 10px 14px;
+      padding: 10px 12px;
       color: var(--text-secondary);
       font-weight: 700;
       border-bottom: 1px solid var(--border);
       font-family: var(--font-mono);
       white-space: nowrap;
     }
+    table.screener-table th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    table.screener-table th.sortable:hover {
+      color: var(--cyan-rs);
+      background: var(--card-hover);
+    }
+    table.screener-table th.sort-active {
+      color: var(--cyan-rs);
+    }
     table.screener-table td {
-      padding: 10px 14px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--border-subtle);
       white-space: nowrap;
     }
@@ -841,8 +997,8 @@
       <div class="status-dot" id="header-status-dot"></div>
       <div class="brand-title">MarketEdge Terminal</div>
       <span class="badge-laptop">EOD QUANT ENGINE</span>
-      <span style="font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono);" id="header-date">As of -- • Source: --</span>
-      <span style="font-size: 11px; color: var(--cyan-rs); font-family: var(--font-mono); font-weight: 700;" id="header-stocks-count">-- of -- stocks loaded</span>
+      <span style="font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono);" id="header-date">Universe: -- stocks (market cap &gt;= Rs 1,000 Cr, liquid) | -- match | As of --</span>
+      <span style="font-size: 11px; color: var(--cyan-rs); font-family: var(--font-mono); font-weight: 700;" id="header-stocks-count">-- failed or skipped</span>
     </div>
 
     <!-- TOP BENCHMARK TICKERS (LOADED EXCLUSIVELY FROM data/market.json) -->
@@ -993,85 +1149,196 @@
     <!-- TAB 2: RELATIVE STRENGTH SCREENER -->
     <section id="tab-screener" class="tab-content">
       <div class="screener-controls">
-        
-        <div class="search-row">
-          <input type="text" id="screener-search" class="screener-input" 
-                 placeholder="Search Ticker Symbol (e.g. DIXON, TRENT, BEL, ETERNAL) or Sector..." 
-                 oninput="filterScreener()">
 
-          <select id="screener-sort" class="screener-select" onchange="filterScreener()">
-            <option value="RS_DESC">Sort: RS Percentile Rank (High to Low)</option>
-            <option value="GAINERS">Sort: Top Daily Gainers (%)</option>
-            <option value="NEAR52">Sort: Closest to 52W High</option>
-            <option value="VOL_SURGE">Sort: Volume Surge (vs 20D Avg)</option>
-            <option value="ALPHA_3M">Sort: 3M Alpha vs Benchmark</option>
+        <div class="search-row">
+          <input type="text" id="screener-search" class="screener-input"
+                 placeholder="Search Ticker Symbol (e.g. DIXON, TRENT, BEL) or Company / Sector..."
+                 oninput="onFilterInputChange()">
+
+          <select id="screener-sort" class="screener-select" onchange="onSortSelectChange()">
+            <option value="rs:desc">Sort: RS Rank (High to Low)</option>
+            <option value="chgPct:desc">Sort: Top Daily Gainers (%)</option>
+            <option value="dist52Pct:asc">Sort: Closest to 52W High</option>
+            <option value="volRatio:desc">Sort: Volume Surge (vs 20D Avg)</option>
+            <option value="alpha3M:desc">Sort: 3M Alpha vs Benchmark</option>
+            <option value="marketCapCr:desc">Sort: Market Cap (High to Low)</option>
           </select>
 
+          <button class="theme-btn" onclick="resetDefaultScreen()" title="RS ≥ 85, > 50 & 200 SMA, ≤ 15% from 52W High">🎯 Default Screen</button>
+          <button class="theme-btn" onclick="clearAllFilters()" title="Remove all filters to view entire NSE universe">🌐 Show All Stocks</button>
+
           <div class="view-toggle-group">
-            <button class="view-btn active" id="btn-view-cards" onclick="setViewMode('cards')">Cards View</button>
-            <button class="view-btn" id="btn-view-table" onclick="setViewMode('table')">📊 Laptop Table View</button>
+            <button class="view-btn active" id="btn-view-table" onclick="setViewMode('table')">📊 Table View</button>
+            <button class="view-btn" id="btn-view-cards" onclick="setViewMode('cards')">Cards (Top 50)</button>
           </div>
         </div>
 
-        <!-- PRESET CHIPS (LABELS MATCH EXACT FILTER THRESHOLDS) -->
-        <div class="chip-row" id="preset-chips">
-          <div class="chip active" onclick="setPreset('ALL', this)" id="preset-chip-all">All Stocks (0)</div>
-          <div class="chip" onclick="setPreset('SUPER', this)">Super Momentum (RS ≥ 85)</div>
-          <div class="chip" onclick="setPreset('WEATHER', this)">Momentum Leaders (RS > 70)</div>
-          <div class="chip" onclick="setPreset('NEAR52', this)">Within 5% of 52W High</div>
-          <div class="chip" onclick="setPreset('PIVOT', this)">Volume Surge (≥ 1.5x Vol)</div>
-          <div class="chip" onclick="setPreset('RESILIENT', this)">Strong 3M Alpha (≥ 10%)</div>
+        <!-- QUANT & TECHNICAL FILTER SUITE -->
+        <div class="filter-grid">
+
+          <!-- RS MINIMUM SLIDER -->
+          <div class="filter-box">
+            <div class="filter-label-row">
+              <span>RS Minimum</span>
+              <span class="filter-val-badge" id="val-rs-min">≥ 85</span>
+            </div>
+            <input type="range" class="range-slider" id="filter-rs-min" min="1" max="99" step="1" value="85" oninput="onFilterInputChange()">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);">
+              <span>1</span><span>50</span><span>85</span><span>99</span>
+            </div>
+          </div>
+
+          <!-- DISTANCE FROM 52W HIGH SLIDER -->
+          <div class="filter-box">
+            <div class="filter-label-row">
+              <span>Max Dist from 52W High</span>
+              <span class="filter-val-badge" id="val-dist52-max">≤ 15%</span>
+            </div>
+            <input type="range" class="range-slider" id="filter-dist52-max" min="1" max="100" step="1" value="15" oninput="onFilterInputChange()">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);">
+              <span>1%</span><span>15%</span><span>50%</span><span>All (100%)</span>
+            </div>
+          </div>
+
+          <!-- VOLUME SURGE SLIDER -->
+          <div class="filter-box">
+            <div class="filter-label-row">
+              <span>Min Volume Surge (20D)</span>
+              <span class="filter-val-badge" id="val-vol-min">≥ 0.0x</span>
+            </div>
+            <input type="range" class="range-slider" id="filter-vol-min" min="0" max="5" step="0.1" value="0" oninput="onFilterInputChange()">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);">
+              <span>0.0x</span><span>1.0x</span><span>1.5x</span><span>5.0x</span>
+            </div>
+          </div>
+
+          <!-- MOVING AVERAGE TREND CHECKBOX -->
+          <div class="filter-box" style="justify-content:center;">
+            <div class="filter-label-row">
+              <span>Trend Filter</span>
+              <span class="filter-val-badge" id="val-above-sma">ON</span>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-primary);padding:4px 0;">
+              <input type="checkbox" id="filter-above-sma" checked onchange="onFilterInputChange()" style="width:16px;height:16px;accent-color:var(--cyan-rs);cursor:pointer;">
+              <span>Price &gt; 50 &amp; 200 SMA</span>
+            </label>
+          </div>
+
+          <!-- MARKET CAP RANGE -->
+          <div class="filter-box">
+            <div class="filter-label-row">
+              <span>Market Cap Range (₹ Cr)</span>
+              <select id="filter-mcap-preset" onchange="onMcapPresetChange()" style="background:var(--surface);border:1px solid var(--border);border-radius:4px;font-size:10px;color:var(--text-primary);padding:1px 4px;">
+                <option value="ALL">Any (≥1k)</option>
+                <option value="1000-5000">1k–5k</option>
+                <option value="5000-25000">5k–25k</option>
+                <option value="25000-100000">25k–1L</option>
+                <option value="100000-">1L+</option>
+              </select>
+            </div>
+            <div class="mcap-inputs-row">
+              <input type="number" id="filter-mcap-min" class="mcap-input" placeholder="Min Cr (1000)" min="0" step="500" oninput="onMcapCustomInput()">
+              <span style="color:var(--text-tertiary);font-size:11px;">–</span>
+              <input type="number" id="filter-mcap-max" class="mcap-input" placeholder="Max Cr" min="0" step="500" oninput="onMcapCustomInput()">
+            </div>
+          </div>
+
+          <!-- DYNAMIC SECTOR MULTI-SELECT -->
+          <div class="filter-box">
+            <div class="filter-label-row">
+              <span>Sectors (Multi-Select)</span>
+              <span class="filter-val-badge" id="val-sectors-count">All</span>
+            </div>
+            <div class="sector-ms-wrap" id="sector-ms-wrap">
+              <button type="button" class="sector-ms-btn" id="sector-ms-btn" onclick="toggleSectorDropdown(event)">
+                <span id="sector-ms-label">All Sectors</span>
+                <span>▾</span>
+              </button>
+              <div class="sector-ms-panel" id="sector-ms-panel" onclick="event.stopPropagation()">
+                <input type="text" id="sector-ms-search" class="mcap-input" placeholder="Filter sectors..." oninput="renderSectorDropdownList()">
+                <div style="display:flex;justify-content:space-between;margin-top:6px;gap:6px;">
+                  <button type="button" class="theme-btn" style="padding:3px 8px;font-size:10px;flex:1;" onclick="selectAllSectors(true)">All</button>
+                  <button type="button" class="theme-btn" style="padding:3px 8px;font-size:10px;flex:1;" onclick="selectAllSectors(false)">Clear</button>
+                </div>
+                <div class="sector-ms-list" id="sector-ms-list"></div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <!-- SECTORS CHIPS -->
-        <div class="chip-row" id="sector-chips">
-          <div class="chip active" onclick="setSector('All', this)">All Sectors</div>
-          <div class="chip" onclick="setSector('Electronics', this)">Electronics / EMS</div>
-          <div class="chip" onclick="setSector('Retail', this)">Retail / Consumer</div>
-          <div class="chip" onclick="setSector('Defence', this)">Defence & Aerospace</div>
-          <div class="chip" onclick="setSector('Power', this)">Power T&D / Infra</div>
-          <div class="chip" onclick="setSector('Railways', this)">Railways</div>
-          <div class="chip" onclick="setSector('Consumer Tech', this)">Consumer Tech</div>
-          <div class="chip" onclick="setSector('IT Services', this)">IT Services</div>
-          <div class="chip" onclick="setSector('Banking', this)">Banking / Financials</div>
+        <!-- CAP TIER MULTI-TOGGLE CHIPS -->
+        <div class="chip-row" id="cap-chips" style="align-items: center;">
+          <span style="font-size:11px;font-weight:700;color:var(--text-secondary);font-family:var(--font-mono);margin-right:4px;">Cap Tier:</span>
+          <div class="chip active" id="cap-chip-all" onclick="toggleAllCapTiers()">All Tiers</div>
+          <div class="chip active" data-cap="Large-Cap" onclick="toggleCapTier('Large-Cap', this)">Large (1–100)</div>
+          <div class="chip active" data-cap="Mid-Cap" onclick="toggleCapTier('Mid-Cap', this)">Mid (101–250)</div>
+          <div class="chip active" data-cap="Small-Cap" onclick="toggleCapTier('Small-Cap', this)">Small (251–500)</div>
+          <div class="chip active" data-cap="Micro-Cap" onclick="toggleCapTier('Micro-Cap', this)">Micro (501+)</div>
         </div>
 
-        <div class="panel-provenance" id="screener-provenance" style="margin-top: 10px;">
-          As of -- • Source: --
+        <!-- ACTIVE THRESHOLDS SUMMARY BAR -->
+        <div class="active-thresholds-bar" id="active-thresholds-bar">
+          <span style="font-weight:800;color:var(--text-secondary);">ACTIVE THRESHOLDS:</span>
         </div>
-        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 6px; font-family: var(--font-mono);">
-          RS Percentile Rank computed across entire tracked universe using 3/6/9/12-month returns (weights 40/20/20/20%).
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+          <div class="panel-provenance" id="screener-provenance">As of -- • Source: --</div>
+          <div id="screener-match-count" style="font-size: 11px; color: var(--cyan-rs); font-family: var(--font-mono); font-weight: 700;">--</div>
         </div>
 
       </div>
 
-      <!-- CARDS VIEW -->
-      <div class="screener-cards" id="screener-cards-grid"></div>
-
-      <!-- LAPTOP TABLE VIEW -->
+      <!-- TABLE VIEW (DEFAULT WITH SORTABLE COLUMNS & PAGINATION) -->
       <div class="screener-table-container" id="screener-table-container">
         <table class="screener-table">
           <thead>
             <tr>
-              <th>Symbol</th>
-              <th>Company Name</th>
-              <th>Sector</th>
-              <th>Cap Tier</th>
-              <th>Price (₹)</th>
-              <th>Chg %</th>
-              <th>RS Rank</th>
-              <th>Dist 52W</th>
-              <th>3M Alpha</th>
-              <th>Vol 20D</th>
-              <th>1Y SD (Ann.)</th>
-              <th>1Y Beta</th>
-              <th>Benchmark</th>
+              <th class="sortable" data-col="symbol" onclick="sortTableBy('symbol')">Symbol <span id="sort-ind-symbol"></span></th>
+              <th class="sortable" data-col="name" onclick="sortTableBy('name')">Company Name <span id="sort-ind-name"></span></th>
+              <th class="sortable" data-col="sector" onclick="sortTableBy('sector')">Sector <span id="sort-ind-sector"></span></th>
+              <th class="sortable" data-col="cap" onclick="sortTableBy('cap')">Cap Tier <span id="sort-ind-cap"></span></th>
+              <th class="sortable" data-col="marketCapCr" onclick="sortTableBy('marketCapCr')">MCap (Cr) <span id="sort-ind-marketCapCr"></span></th>
+              <th class="sortable" data-col="price" onclick="sortTableBy('price')">Price (₹) <span id="sort-ind-price"></span></th>
+              <th class="sortable" data-col="chgPct" onclick="sortTableBy('chgPct')">Chg % <span id="sort-ind-chgPct"></span></th>
+              <th class="sortable sort-active" data-col="rs" onclick="sortTableBy('rs')">RS Rank <span id="sort-ind-rs">▼</span></th>
+              <th class="sortable" data-col="dist52Pct" onclick="sortTableBy('dist52Pct')">Dist 52W <span id="sort-ind-dist52Pct"></span></th>
+              <th class="sortable" data-col="alpha3M" onclick="sortTableBy('alpha3M')">3M Alpha <span id="sort-ind-alpha3M"></span></th>
+              <th class="sortable" data-col="volRatio" onclick="sortTableBy('volRatio')">Vol 20D <span id="sort-ind-volRatio"></span></th>
+              <th class="sortable" data-col="sd1Y" onclick="sortTableBy('sd1Y')">1Y SD (Ann.) <span id="sort-ind-sd1Y"></span></th>
+              <th class="sortable" data-col="beta1Y" onclick="sortTableBy('beta1Y')">1Y Beta <span id="sort-ind-beta1Y"></span></th>
+              <th class="sortable" data-col="benchmarkName" onclick="sortTableBy('benchmarkName')">Benchmark <span id="sort-ind-benchmarkName"></span></th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody id="screener-table-body"></tbody>
         </table>
       </div>
+
+      <!-- PAGINATION BAR -->
+      <div class="pagination-bar" id="screener-pagination">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span id="pagination-summary" style="color:var(--text-secondary);">Showing 0 of 0 matches</span>
+          <label style="display:flex;align-items:center;gap:6px;color:var(--text-secondary);">
+            Rows/page:
+            <select id="screener-page-size" class="screener-select" style="padding:4px 8px;font-size:11px;" onchange="onPageSizeChange()">
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="theme-btn" id="btn-page-prev" onclick="changePage(-1)">◀ Prev</button>
+          <span id="pagination-page-label" style="font-weight:700;color:var(--text-primary);">Page 1 of 1</span>
+          <button class="theme-btn" id="btn-page-next" onclick="changePage(1)">Next ▶</button>
+        </div>
+      </div>
+
+      <!-- CARDS VIEW (LIMITED TO TOP 50 MATCHES) -->
+      <div id="cards-cap-notice" style="display:none;margin-bottom:10px;font-size:11px;font-family:var(--font-mono);color:var(--text-secondary);"></div>
+      <div class="screener-cards" id="screener-cards-grid"></div>
     </section>
 
     <!-- TAB 3: PUBLISHED RESULTS -->
@@ -1180,12 +1447,20 @@
     let EARNINGS_RADAR = [];
     let NIFTY500_HISTORY_MAP = new Map();
 
-    let currentPreset = 'ALL';
-    let currentSector = 'All';
+    const ALL_CAP_TIERS = ['Large-Cap', 'Mid-Cap', 'Small-Cap', 'Micro-Cap'];
+    let selectedCapTiers = new Set(ALL_CAP_TIERS);
+    let selectedSectors = new Set(); // empty = All Sectors
+    let allUniverseSectors = []; // [{ sector, count }]
     let currentResultFilter = 'ALL';
-    let currentViewMode = 'cards';
+    let currentViewMode = 'table';
+    let currentPage = 1;
+    let pageSize = 50;
+    let sortCol = 'rs';
+    let sortDir = 'desc';
+    let lastFilteredCount = 0;
 
     let activeStockSymbol = '';
+    let activeStockDetail = null; // Full quant detail loaded from data/stocks/<SYMBOL>.json
     let activeStockCandles = []; // Full indicator-enriched real bars from data/history/<SYMBOL>.json
     let selectedTimeframe = '3M';
     let selectedIndicator = 'ALL';
@@ -1372,12 +1647,13 @@
           document.getElementById("eod-status-pill")?.classList.remove("error");
         }
 
+        populateDynamicSectorOptions();
+        renderScreener();
         updateAllProvenance();
         renderHeaderTickers();
         renderFiiDii();
         renderBreadth();
         renderBullets();
-        renderScreener();
         renderResults();
         renderEarnings();
         renderIndices();
@@ -1437,18 +1713,49 @@
         const el = document.getElementById(id);
         if (el) el.innerHTML = `<div style="padding: 20px; color: var(--red); font-size: 12px; text-align: center;">Data stale / unavailable</div>`;
       });
+      const headerDateEl = document.getElementById("header-date");
+      if (headerDateEl) {
+        headerDateEl.innerText = "Universe: 0 stocks (market cap >= Rs 1,000 Cr, liquid) | 0 match | As of unavailable";
+      }
       const headerCountEl = document.getElementById("header-stocks-count");
       if (headerCountEl) {
-        headerCountEl.innerText = "0 of -- stocks loaded";
+        headerCountEl.innerText = "Data unavailable";
         headerCountEl.style.color = "var(--red)";
       }
       const tbody = document.getElementById("screener-table-body");
-      if (tbody) tbody.innerHTML = `<tr><td colspan="14" style="text-align:center;color:var(--red);padding:20px;">Data stale / unavailable</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="15" style="text-align:center;color:var(--red);padding:20px;">Data stale / unavailable</td></tr>`;
     }
 
     // -------------------------------------------------------------
-    // PROVENANCE LABELS (RULE 1: EVERY PANEL SHOWS As of ... • Source: ...)
+    // PROVENANCE LABELS & HEADER SUMMARY LINE
     // -------------------------------------------------------------
+    function updateHeaderSummary(matchCount) {
+      if (!MARKET_DATA || !MARKET_DATA.meta) return;
+      const m = MARKET_DATA.meta;
+      const asOfStr = formatISTDateTime(m.asOf);
+      const nStocks = STOCKS.length;
+      const mMatch = matchCount ?? lastFilteredCount;
+
+      const headerDateEl = document.getElementById("header-date");
+      if (headerDateEl) {
+        headerDateEl.innerText = `Universe: ${nStocks.toLocaleString('en-IN')} stocks (market cap >= Rs 1,000 Cr, liquid) | ${mMatch.toLocaleString('en-IN')} match | As of ${asOfStr}`;
+      }
+
+      const failedSymbols = Array.isArray(m.failedSymbols) ? m.failedSymbols : [];
+      const skippedSymbols = Array.isArray(m.skippedSymbols) ? m.skippedSymbols : [];
+      const xCount = failedSymbols.length + skippedSymbols.length;
+      const countEl = document.getElementById("header-stocks-count");
+      if (countEl) {
+        countEl.innerText = `${xCount} failed or skipped`;
+        if (failedSymbols.length > 0) {
+          countEl.style.color = "var(--amber)";
+        } else {
+          countEl.style.color = xCount > 0 ? "var(--text-secondary)" : "var(--cyan-rs)";
+        }
+        countEl.title = `Failed (${failedSymbols.length}): ${failedSymbols.slice(0, 15).join(', ') || 'none'} | Skipped (${skippedSymbols.length}, <252 bars or >10% zero-vol): ${skippedSymbols.slice(0, 15).join(', ') || 'none'}`;
+      }
+    }
+
     function updateAllProvenance() {
       if (!MARKET_DATA || !MARKET_DATA.meta) return;
       const m = MARKET_DATA.meta;
@@ -1460,22 +1767,7 @@
         if (el) el.innerText = val;
       };
 
-      setTxt("header-date", mainProv);
-
-      const loadedCount = STOCKS.length;
-      const totalCount = m.universeTotal ?? loadedCount;
-      const failedSymbols = Array.isArray(m.failedSymbols) ? m.failedSymbols : [];
-      const countEl = document.getElementById("header-stocks-count");
-      if (countEl) {
-        countEl.innerText = `${loadedCount} of ${totalCount} stocks loaded`;
-        if (failedSymbols.length > 0) {
-          countEl.style.color = "var(--amber)";
-          countEl.title = `Skipped failed symbols: ${failedSymbols.join(', ')}`;
-        } else {
-          countEl.style.color = "var(--cyan-rs)";
-          countEl.title = `All ${totalCount} universe stocks loaded cleanly`;
-        }
-      }
+      updateHeaderSummary(lastFilteredCount);
 
       setTxt("eod-provenance-inline", mainProv);
       setTxt("footer-time", `Generated ${formatISTDateTime(m.generatedAt)} • ${mainProv}`);
@@ -1663,61 +1955,459 @@
     }
 
     // -------------------------------------------------------------
-    // SCREENER (UNIVERSE RS PERCENTILES & QUANT METRICS)
+    // SCREENER (1,000+ STOCKS: FILTERS, SORTABLE COLUMNS, PAGINATION)
     // -------------------------------------------------------------
     function getStockAlpha3M(s) {
-      return s.quant?.relevant?.['3M']?.alpha ?? null;
+      return s.alpha3M ?? s.quant?.relevant?.['3M']?.alpha ?? null;
+    }
+
+    function getStockSd1Y(s) {
+      return s.sd1Y ?? s.quant?.relevant?.['1Y']?.sdStock ?? null;
+    }
+
+    function getStockBeta1Y(s) {
+      return s.beta1Y ?? s.quant?.relevant?.['1Y']?.beta ?? null;
+    }
+
+    function populateDynamicSectorOptions() {
+      const counts = new Map();
+      STOCKS.forEach(s => {
+        const sec = s.sector || 'Unclassified';
+        counts.set(sec, (counts.get(sec) || 0) + 1);
+      });
+      allUniverseSectors = Array.from(counts.entries())
+        .map(([sector, count]) => ({ sector, count }))
+        .sort((a, b) => b.count - a.count || a.sector.localeCompare(b.sector));
+      renderSectorDropdownList();
+      updateSectorButtonLabel();
+    }
+
+    function renderSectorDropdownList() {
+      const listEl = document.getElementById("sector-ms-list");
+      if (!listEl) return;
+      const q = (document.getElementById("sector-ms-search")?.value || "").trim().toLowerCase();
+      const visible = allUniverseSectors.filter(item => !q || item.sector.toLowerCase().includes(q));
+      listEl.innerHTML = visible.map(item => {
+        const checked = selectedSectors.has(item.sector) ? 'checked' : '';
+        return `
+          <label class="sector-ms-item">
+            <input type="checkbox" ${checked} data-sector="${escapeHtml(item.sector)}" onchange="onSectorCheckboxToggle(this)">
+            <span style="flex:1;">${escapeHtml(item.sector)}</span>
+            <span style="color:var(--text-tertiary);font-family:var(--font-mono);">(${item.count})</span>
+          </label>
+        `;
+      }).join('') || `<div style="padding:8px;font-size:11px;color:var(--text-tertiary);">No matching sectors</div>`;
+    }
+
+    function onSectorCheckboxToggle(cb) {
+      const sec = cb.getAttribute('data-sector');
+      if (!sec) return;
+      if (cb.checked) selectedSectors.add(sec);
+      else selectedSectors.delete(sec);
+      updateSectorButtonLabel();
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function selectAllSectors(selectAll) {
+      selectedSectors.clear();
+      if (selectAll) {
+        allUniverseSectors.forEach(item => selectedSectors.add(item.sector));
+      }
+      renderSectorDropdownList();
+      updateSectorButtonLabel();
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function updateSectorButtonLabel() {
+      const labelEl = document.getElementById("sector-ms-label");
+      const badgeEl = document.getElementById("val-sectors-count");
+      const n = selectedSectors.size;
+      const total = allUniverseSectors.length;
+      if (n === 0 || (total > 0 && n === total)) {
+        if (labelEl) labelEl.innerText = "All Sectors";
+        if (badgeEl) badgeEl.innerText = "All";
+      } else if (n === 1) {
+        const only = Array.from(selectedSectors)[0];
+        if (labelEl) labelEl.innerText = only;
+        if (badgeEl) badgeEl.innerText = "1 selected";
+      } else {
+        if (labelEl) labelEl.innerText = `${n} sectors selected`;
+        if (badgeEl) badgeEl.innerText = `${n} selected`;
+      }
+    }
+
+    function toggleSectorDropdown(e) {
+      e.stopPropagation();
+      document.getElementById("sector-ms-panel")?.classList.toggle("open");
+    }
+
+    document.addEventListener("click", (e) => {
+      const wrap = document.getElementById("sector-ms-wrap");
+      const panel = document.getElementById("sector-ms-panel");
+      if (panel && panel.classList.contains("open") && wrap && !wrap.contains(e.target)) {
+        panel.classList.remove("open");
+      }
+    });
+
+    function toggleCapTier(tier, el) {
+      if (selectedCapTiers.has(tier)) {
+        // Keep at least 1 selected or allow empty -> treat empty as none or toggle cleanly
+        selectedCapTiers.delete(tier);
+      } else {
+        selectedCapTiers.add(tier);
+      }
+      syncCapTierChipUI();
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function toggleAllCapTiers() {
+      selectedCapTiers = new Set(ALL_CAP_TIERS);
+      syncCapTierChipUI();
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function syncCapTierChipUI() {
+      const allBtn = document.getElementById("cap-chip-all");
+      const allOn = selectedCapTiers.size === ALL_CAP_TIERS.length;
+      if (allBtn) allBtn.classList.toggle("active", allOn);
+      document.querySelectorAll("#cap-chips .chip[data-cap]").forEach(el => {
+        const cap = el.getAttribute("data-cap");
+        el.classList.toggle("active", selectedCapTiers.has(cap));
+      });
+    }
+
+    function onMcapPresetChange() {
+      const val = document.getElementById("filter-mcap-preset")?.value || "ALL";
+      const minEl = document.getElementById("filter-mcap-min");
+      const maxEl = document.getElementById("filter-mcap-max");
+      if (!minEl || !maxEl) return;
+      if (val === "ALL") {
+        minEl.value = "";
+        maxEl.value = "";
+      } else {
+        const [mn, mx] = val.split("-");
+        minEl.value = mn || "";
+        maxEl.value = mx || "";
+      }
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function onMcapCustomInput() {
+      const presetEl = document.getElementById("filter-mcap-preset");
+      if (presetEl) presetEl.value = "ALL";
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function onFilterInputChange() {
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function resetDefaultScreen() {
+      const rsEl = document.getElementById("filter-rs-min");
+      const d52El = document.getElementById("filter-dist52-max");
+      const volEl = document.getElementById("filter-vol-min");
+      const smaEl = document.getElementById("filter-above-sma");
+      const mcapPre = document.getElementById("filter-mcap-preset");
+      const mcapMin = document.getElementById("filter-mcap-min");
+      const mcapMax = document.getElementById("filter-mcap-max");
+      const searchEl = document.getElementById("screener-search");
+
+      if (rsEl) rsEl.value = 85;
+      if (d52El) d52El.value = 15;
+      if (volEl) volEl.value = 0;
+      if (smaEl) smaEl.checked = true;
+      if (mcapPre) mcapPre.value = "ALL";
+      if (mcapMin) mcapMin.value = "";
+      if (mcapMax) mcapMax.value = "";
+      if (searchEl) searchEl.value = "";
+
+      selectedCapTiers = new Set(ALL_CAP_TIERS);
+      syncCapTierChipUI();
+      selectedSectors.clear();
+      renderSectorDropdownList();
+      updateSectorButtonLabel();
+
+      sortCol = 'rs';
+      sortDir = 'desc';
+      syncSortHeadersUI();
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function clearAllFilters() {
+      const rsEl = document.getElementById("filter-rs-min");
+      const d52El = document.getElementById("filter-dist52-max");
+      const volEl = document.getElementById("filter-vol-min");
+      const smaEl = document.getElementById("filter-above-sma");
+      const mcapPre = document.getElementById("filter-mcap-preset");
+      const mcapMin = document.getElementById("filter-mcap-min");
+      const mcapMax = document.getElementById("filter-mcap-max");
+      const searchEl = document.getElementById("screener-search");
+
+      if (rsEl) rsEl.value = 1;
+      if (d52El) d52El.value = 100;
+      if (volEl) volEl.value = 0;
+      if (smaEl) smaEl.checked = false;
+      if (mcapPre) mcapPre.value = "ALL";
+      if (mcapMin) mcapMin.value = "";
+      if (mcapMax) mcapMax.value = "";
+      if (searchEl) searchEl.value = "";
+
+      selectedCapTiers = new Set(ALL_CAP_TIERS);
+      syncCapTierChipUI();
+      selectedSectors.clear();
+      renderSectorDropdownList();
+      updateSectorButtonLabel();
+
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function sortTableBy(col) {
+      if (sortCol === col) {
+        sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+      } else {
+        sortCol = col;
+        const ascDefaultCols = new Set(['symbol', 'name', 'sector', 'cap', 'benchmarkName', 'dist52Pct']);
+        sortDir = ascDefaultCols.has(col) ? 'asc' : 'desc';
+      }
+      syncSortHeadersUI();
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function onSortSelectChange() {
+      const val = document.getElementById("screener-sort")?.value || "rs:desc";
+      const [col, dir] = val.split(":");
+      sortCol = col || 'rs';
+      sortDir = dir || 'desc';
+      syncSortHeadersUI();
+      currentPage = 1;
+      renderScreener();
+    }
+
+    function syncSortHeadersUI() {
+      document.querySelectorAll("table.screener-table th.sortable").forEach(th => {
+        const col = th.getAttribute("data-col");
+        const ind = document.getElementById(`sort-ind-${col}`);
+        if (col === sortCol) {
+          th.classList.add("sort-active");
+          if (ind) ind.innerText = sortDir === 'asc' ? '▲' : '▼';
+        } else {
+          th.classList.remove("sort-active");
+          if (ind) ind.innerText = '';
+        }
+      });
+      const sel = document.getElementById("screener-sort");
+      const key = `${sortCol}:${sortDir}`;
+      if (sel && Array.from(sel.options).some(o => o.value === key)) {
+        sel.value = key;
+      }
+    }
+
+    function getSortValue(s, col) {
+      if (col === 'alpha3M') return getStockAlpha3M(s);
+      if (col === 'sd1Y') return getStockSd1Y(s);
+      if (col === 'beta1Y') return getStockBeta1Y(s);
+      if (col === 'cap') {
+        const order = { 'Large-Cap': 1, 'Mid-Cap': 2, 'Small-Cap': 3, 'Micro-Cap': 4 };
+        return order[s.cap] || 99;
+      }
+      return s[col];
+    }
+
+    function readFilterParams() {
+      const search = (document.getElementById("screener-search")?.value || "").trim().toLowerCase();
+      const rsMin = Number(document.getElementById("filter-rs-min")?.value ?? 85);
+      const dist52Max = Number(document.getElementById("filter-dist52-max")?.value ?? 15);
+      const volMin = Number(document.getElementById("filter-vol-min")?.value ?? 0);
+      const aboveSma = Boolean(document.getElementById("filter-above-sma")?.checked);
+      const mcapMinRaw = document.getElementById("filter-mcap-min")?.value;
+      const mcapMaxRaw = document.getElementById("filter-mcap-max")?.value;
+      const mcapMin = mcapMinRaw !== "" && mcapMinRaw != null ? Number(mcapMinRaw) : null;
+      const mcapMax = mcapMaxRaw !== "" && mcapMaxRaw != null ? Number(mcapMaxRaw) : null;
+      return { search, rsMin, dist52Max, volMin, aboveSma, mcapMin, mcapMax };
+    }
+
+    function renderActiveThresholdsBar(f) {
+      const setTxt = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = v;
+      };
+      setTxt("val-rs-min", `≥ ${f.rsMin}`);
+      setTxt("val-dist52-max", f.dist52Max >= 100 ? `≤ 100% (All)` : `≤ ${f.dist52Max}%`);
+      setTxt("val-vol-min", `≥ ${f.volMin.toFixed(1)}x`);
+      setTxt("val-above-sma", f.aboveSma ? "ON" : "OFF");
+
+      const bar = document.getElementById("active-thresholds-bar");
+      if (!bar) return;
+
+      const pills = [];
+      pills.push(`RS ≥ ${f.rsMin}`);
+      pills.push(f.dist52Max >= 100 ? `52W High Dist: Any` : `52W High Dist ≤ ${f.dist52Max}%`);
+      if (f.aboveSma) pills.push(`Price > 50 & 200 SMA`);
+      if (f.volMin > 0) pills.push(`Vol ≥ ${f.volMin.toFixed(1)}x 20D`);
+
+      if (f.mcapMin != null || f.mcapMax != null) {
+        const lo = f.mcapMin != null ? `₹${f.mcapMin.toLocaleString('en-IN')} Cr` : '₹1,000 Cr';
+        const hi = f.mcapMax != null ? `₹${f.mcapMax.toLocaleString('en-IN')} Cr` : '∞';
+        pills.push(`MCap: ${lo} – ${hi}`);
+      } else {
+        pills.push(`MCap ≥ ₹1,000 Cr`);
+      }
+
+      if (selectedCapTiers.size === 0) {
+        pills.push(`Cap: None selected`);
+      } else if (selectedCapTiers.size < ALL_CAP_TIERS.length) {
+        pills.push(`Cap: ${Array.from(selectedCapTiers).map(c => c.replace('-Cap', '')).join(', ')}`);
+      } else {
+        pills.push(`Cap: All`);
+      }
+
+      if (selectedSectors.size > 0 && selectedSectors.size < allUniverseSectors.length) {
+        const secPreview = Array.from(selectedSectors).slice(0, 2).join(', ') + (selectedSectors.size > 2 ? ` +${selectedSectors.size - 2}` : '');
+        pills.push(`Sectors: ${secPreview}`);
+      } else {
+        pills.push(`Sectors: All`);
+      }
+
+      if (f.search) {
+        pills.push(`Search: "${f.search}"`);
+      }
+
+      bar.innerHTML = `<span style="font-weight:800;color:var(--text-secondary);">ACTIVE THRESHOLDS:</span>` +
+        pills.map(p => `<span class="threshold-pill">${escapeHtml(p)}</span>`).join('');
     }
 
     function getFilteredStocks() {
-      const search = (document.getElementById("screener-search")?.value || "").trim().toLowerCase();
-      const sort = document.getElementById("screener-sort")?.value || "RS_DESC";
+      const f = readFilterParams();
+      renderActiveThresholdsBar(f);
+
+      const useSectorFilter = selectedSectors.size > 0 && selectedSectors.size < allUniverseSectors.length;
 
       return STOCKS.filter(s => {
-        if (currentSector !== 'All' && !s.sector.toLowerCase().includes(currentSector.toLowerCase())) {
-          return false;
-        }
-        if (search) {
-          const hit = s.symbol.toLowerCase().includes(search) ||
-                      s.name.toLowerCase().includes(search) ||
-                      s.sector.toLowerCase().includes(search);
+        if (!selectedCapTiers.has(s.cap)) return false;
+        if (useSectorFilter && !selectedSectors.has(s.sector || 'Unclassified')) return false;
+        if ((s.rs ?? 0) < f.rsMin) return false;
+        if (f.dist52Max < 100 && (s.dist52Pct ?? 999) > f.dist52Max) return false;
+        if ((s.volRatio ?? 0) < f.volMin) return false;
+        if (f.aboveSma && (!s.above50Sma || !s.above200Sma)) return false;
+
+        if (f.mcapMin != null && (s.marketCapCr == null || s.marketCapCr < f.mcapMin)) return false;
+        if (f.mcapMax != null && (s.marketCapCr == null || s.marketCapCr > f.mcapMax)) return false;
+
+        if (f.search) {
+          const hit = s.symbol.toLowerCase().includes(f.search) ||
+                      s.name.toLowerCase().includes(f.search) ||
+                      (s.sector || '').toLowerCase().includes(f.search);
           if (!hit) return false;
         }
-
-        // Preset chips match EXACT numeric thresholds shown in labels
-        if (currentPreset === 'SUPER' && s.rs < 85) return false;
-        if (currentPreset === 'WEATHER' && s.rs <= 70) return false;
-        if (currentPreset === 'NEAR52' && s.dist52Pct > 5.0) return false;
-        if (currentPreset === 'PIVOT' && s.volRatio < 1.5) return false;
-        if (currentPreset === 'RESILIENT') {
-          const a3 = getStockAlpha3M(s);
-          if (a3 == null || a3 < 10) return false;
-        }
-
         return true;
       }).sort((a, b) => {
-        if (sort === 'RS_DESC') return b.rs - a.rs;
-        if (sort === 'GAINERS') return b.chgPct - a.chgPct;
-        if (sort === 'NEAR52') return a.dist52Pct - b.dist52Pct;
-        if (sort === 'VOL_SURGE') return b.volRatio - a.volRatio;
-        if (sort === 'ALPHA_3M') return (getStockAlpha3M(b) ?? -999) - (getStockAlpha3M(a) ?? -999);
-        return 0;
+        const va = getSortValue(a, sortCol);
+        const vb = getSortValue(b, sortCol);
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        if (typeof va === 'string' && typeof vb === 'string') {
+          return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+        return sortDir === 'asc' ? (va - vb) : (vb - va);
       });
     }
 
     function renderScreener() {
       const cardsGrid = document.getElementById("screener-cards-grid");
       const tableBody = document.getElementById("screener-table-body");
+      const matchEl = document.getElementById("screener-match-count");
+      const pagSumEl = document.getElementById("pagination-summary");
+      const pagLblEl = document.getElementById("pagination-page-label");
+      const prevBtn = document.getElementById("btn-page-prev");
+      const nextBtn = document.getElementById("btn-page-next");
+      const pagBar = document.getElementById("screener-pagination");
+      const cardsNotice = document.getElementById("cards-cap-notice");
       if (!cardsGrid || !tableBody) return;
 
       const filtered = getFilteredStocks();
-      const allChip = document.getElementById("preset-chip-all");
-      if (allChip) allChip.innerText = `All Stocks (${STOCKS.length})`;
+      lastFilteredCount = filtered.length;
+      updateHeaderSummary(filtered.length);
 
-      cardsGrid.innerHTML = filtered.map(s => {
+      const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIdx = (currentPage - 1) * pageSize;
+      const endIdx = Math.min(filtered.length, startIdx + pageSize);
+      const pageRows = filtered.slice(startIdx, endIdx);
+
+      if (matchEl) {
+        matchEl.innerText = `${filtered.length.toLocaleString('en-IN')} of ${STOCKS.length.toLocaleString('en-IN')} stocks match`;
+      }
+
+      if (pagBar) {
+        pagBar.style.display = currentViewMode === 'table' ? 'flex' : 'none';
+      }
+      if (pagSumEl) {
+        pagSumEl.innerText = filtered.length === 0
+          ? 'Showing 0 of 0 matches'
+          : `Showing ${startIdx + 1}–${endIdx} of ${filtered.length.toLocaleString('en-IN')} matches`;
+      }
+      if (pagLblEl) pagLblEl.innerText = `Page ${currentPage} of ${totalPages}`;
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+
+      // Table view: current page rows (50 rows/page default)
+      tableBody.innerHTML = pageRows.map(s => {
         const alpha3m = getStockAlpha3M(s);
-        const sd1y = s.quant?.relevant?.['1Y']?.sdStock ?? null;
-        const beta1y = s.quant?.relevant?.['1Y']?.beta ?? null;
+        const sd1y = getStockSd1Y(s);
+        const beta1y = getStockBeta1Y(s);
+        const rsClass = s.rs >= 85 ? 'rs-super' : s.rs >= 70 ? 'rs-high' : 'rs-mid';
+
+        return `
+          <tr id="table-row-${escapeHtml(s.symbol)}" onclick="openStockModal('${escapeHtml(s.symbol)}')" style="cursor: pointer;">
+            <td style="font-family: var(--font-mono); font-weight: 800; color: var(--cyan-rs);">${escapeHtml(s.symbol)}</td>
+            <td style="font-weight: 600;">${escapeHtml(s.name)}</td>
+            <td>${escapeHtml(s.sector)}</td>
+            <td>${escapeHtml(s.cap)}</td>
+            <td style="font-family: var(--font-mono);">${s.marketCapCr ? '₹' + s.marketCapCr.toLocaleString('en-IN') : '--'}</td>
+            <td style="font-family: var(--font-mono); font-weight: 700;">₹${fmtNum(s.price, 2)}</td>
+            <td class="${(s.chgPct ?? 0) >= 0 ? 'up' : 'down'}" style="font-family: var(--font-mono); font-weight: 700;">${fmtSigned(s.chgPct, 2, '%')}</td>
+            <td><span class="rs-score-badge ${rsClass}">RS ${s.rs ?? '--'}</span></td>
+            <td style="font-family: var(--font-mono);">${s.dist52Pct != null ? s.dist52Pct.toFixed(1) + '%' : '--'}</td>
+            <td style="font-family: var(--font-mono);" class="${(alpha3m ?? 0) >= 0 ? 'up' : 'down'}">${fmtSigned(alpha3m, 1, '%')}</td>
+            <td style="font-family: var(--font-mono);">${s.volRatio != null ? s.volRatio + 'x' : '--'}</td>
+            <td style="font-family: var(--font-mono);">${sd1y != null ? sd1y.toFixed(1) + '%' : '--'}</td>
+            <td style="font-family: var(--font-mono);">${beta1y != null ? beta1y.toFixed(2) : '--'}</td>
+            <td style="font-size: 11px;">${escapeHtml(s.benchmarkName)}</td>
+            <td><button class="theme-btn" style="padding: 2px 8px; font-size: 10px;" onclick="event.stopPropagation(); openStockModal('${escapeHtml(s.symbol)}')">Dossier</button></td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="15" style="text-align: center; padding: 24px; color: var(--text-secondary);">No stocks match current thresholds. Try relaxing filters or clicking "Show All Stocks".</td></tr>`;
+
+      // Cards view: strictly limited to top 50 matches
+      const top50Cards = filtered.slice(0, 50);
+      if (cardsNotice) {
+        if (currentViewMode === 'cards') {
+          cardsNotice.style.display = 'block';
+          cardsNotice.innerText = filtered.length > 50
+            ? `Cards view displays top 50 of ${filtered.length.toLocaleString('en-IN')} matches (switch to Table View for full pagination).`
+            : `Showing ${top50Cards.length} matching stocks in Cards view.`;
+        } else {
+          cardsNotice.style.display = 'none';
+        }
+      }
+
+      cardsGrid.innerHTML = top50Cards.map(s => {
+        const alpha3m = getStockAlpha3M(s);
+        const sd1y = getStockSd1Y(s);
+        const beta1y = getStockBeta1Y(s);
         const rsClass = s.rs >= 85 ? 'rs-super' : s.rs >= 70 ? 'rs-high' : 'rs-mid';
         const isUpper = typeof s.chgPct === 'number' && s.chgPct >= 19.5;
 
@@ -1737,20 +2427,20 @@
 
               <div class="card-price-row">
                 <span class="stock-card-price">₹${fmtNum(s.price, 2)}</span>
-                <span class="stock-card-chg ${s.chgPct >= 0 ? 'up' : 'down'}">${fmtSigned(s.chgPct, 2, '%')}</span>
+                <span class="stock-card-chg ${(s.chgPct ?? 0) >= 0 ? 'up' : 'down'}">${fmtSigned(s.chgPct, 2, '%')}</span>
               </div>
 
               <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; font-family: var(--font-mono);">
-                <span>Dist 52W High: <strong>${s.dist52Pct.toFixed(1)}%</strong></span>
+                <span>Dist 52W High: <strong>${s.dist52Pct != null ? s.dist52Pct.toFixed(1) + '%' : '--'}</strong></span>
                 <span>3M Alpha: <strong class="${(alpha3m ?? 0) >= 0 ? 'up' : 'down'}">${fmtSigned(alpha3m, 1, '%')}</strong></span>
               </div>
 
               <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 6px; font-family: var(--font-mono);">
-                Benchmark: <strong style="color: var(--text-secondary);">${escapeHtml(s.benchmarkName)}</strong> • Vol: <strong>${s.volRatio}x 20D</strong>
+                Benchmark: <strong style="color: var(--text-secondary);">${escapeHtml(s.benchmarkName)}</strong> • Vol: <strong>${s.volRatio != null ? s.volRatio + 'x 20D' : '--'}</strong>
               </div>
 
               <div style="background: var(--card); padding: 6px 8px; border-radius: 6px; font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-family: var(--font-mono);">
-                1Y SD: <strong>${sd1y != null ? sd1y.toFixed(1) + '%' : '--'}</strong> • Beta: <strong>${beta1y != null ? beta1y.toFixed(2) : '--'}</strong> • RSI(14): <strong>${s.rsi14}</strong>
+                1Y SD: <strong>${sd1y != null ? sd1y.toFixed(1) + '%' : '--'}</strong> • Beta: <strong>${beta1y != null ? beta1y.toFixed(2) : '--'}</strong> • MCap: <strong>${s.marketCapCr ? '₹' + s.marketCapCr.toLocaleString('en-IN') + ' Cr' : '--'}</strong>
               </div>
             </div>
 
@@ -1760,46 +2450,19 @@
             </div>
           </div>
         `;
-      }).join('') || `<div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--text-secondary);">No stocks match current filters.</div>`;
-
-      tableBody.innerHTML = filtered.map(s => {
-        const alpha3m = getStockAlpha3M(s);
-        const sd1y = s.quant?.relevant?.['1Y']?.sdStock ?? null;
-        const beta1y = s.quant?.relevant?.['1Y']?.beta ?? null;
-        const rsClass = s.rs >= 85 ? 'rs-super' : s.rs >= 70 ? 'rs-high' : 'rs-mid';
-
-        return `
-          <tr id="table-row-${escapeHtml(s.symbol)}" onclick="openStockModal('${escapeHtml(s.symbol)}')" style="cursor: pointer;">
-            <td style="font-family: var(--font-mono); font-weight: 800; color: var(--cyan-rs);">${escapeHtml(s.symbol)}</td>
-            <td style="font-weight: 600;">${escapeHtml(s.name)}</td>
-            <td>${escapeHtml(s.sector)}</td>
-            <td>${escapeHtml(s.cap)}</td>
-            <td style="font-family: var(--font-mono); font-weight: 700;">₹${fmtNum(s.price, 2)}</td>
-            <td class="${s.chgPct >= 0 ? 'up' : 'down'}" style="font-family: var(--font-mono); font-weight: 700;">${fmtSigned(s.chgPct, 2, '%')}</td>
-            <td><span class="rs-score-badge ${rsClass}">RS ${s.rs}</span></td>
-            <td style="font-family: var(--font-mono);">${s.dist52Pct.toFixed(1)}%</td>
-            <td style="font-family: var(--font-mono);" class="${(alpha3m ?? 0) >= 0 ? 'up' : 'down'}">${fmtSigned(alpha3m, 1, '%')}</td>
-            <td style="font-family: var(--font-mono);">${s.volRatio}x</td>
-            <td style="font-family: var(--font-mono);">${sd1y != null ? sd1y.toFixed(1) + '%' : '--'}</td>
-            <td style="font-family: var(--font-mono);">${beta1y != null ? beta1y.toFixed(2) : '--'}</td>
-            <td style="font-size: 11px;">${escapeHtml(s.benchmarkName)}</td>
-            <td><button class="theme-btn" style="padding: 2px 8px; font-size: 10px;" onclick="event.stopPropagation(); openStockModal('${escapeHtml(s.symbol)}')">Dossier</button></td>
-          </tr>
-        `;
-      }).join('') || `<tr><td colspan="14" style="text-align: center; padding: 20px; color: var(--text-secondary);">No stocks match current filters.</td></tr>`;
+      }).join('') || `<div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--text-secondary);">No stocks match current thresholds.</div>`;
     }
 
-    function filterScreener() { renderScreener(); }
-    function setPreset(preset, el) {
-      currentPreset = preset;
-      document.querySelectorAll("#preset-chips .chip").forEach(c => c.classList.remove("active"));
-      el.classList.add("active");
+    function changePage(delta) {
+      currentPage += delta;
       renderScreener();
+      document.getElementById("tab-screener")?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    function setSector(sec, el) {
-      currentSector = sec;
-      document.querySelectorAll("#sector-chips .chip").forEach(c => c.classList.remove("active"));
-      el.classList.add("active");
+
+    function onPageSizeChange() {
+      const sel = document.getElementById("screener-page-size");
+      pageSize = Number(sel?.value || 50) || 50;
+      currentPage = 1;
       renderScreener();
     }
 
@@ -1918,54 +2581,45 @@
     }
 
     // -------------------------------------------------------------
-    // STOCK DOSSIER MODAL + QUANT COMPARISON + REAL data/history/<SYMBOL>.json
+    // STOCK DOSSIER MODAL + QUANT COMPARISON (data/stocks/ & data/history/)
     // -------------------------------------------------------------
     async function openStockModal(symbol) {
-      const stock = STOCKS.find(s => s.symbol === symbol);
-      if (!stock) return;
+      const compactStock = STOCKS.find(s => s.symbol === symbol);
+      if (!compactStock) return;
 
       activeStockSymbol = symbol;
+      activeStockDetail = compactStock;
       activeStockCandles = [];
       currentModalBenchmark = 'relevant';
 
       const body = document.getElementById("modal-body");
-      const asOfStr = formatISTDateTime(stock.asOf);
-      const isUpper = typeof stock.chgPct === 'number' && stock.chgPct >= 19.5;
-      const rangePercent = (stock.high52 > stock.low52)
-        ? Math.min(100, Math.max(0, ((stock.price - stock.low52) / (stock.high52 - stock.low52)) * 100))
-        : 50;
+      const asOfStr = formatISTDateTime(compactStock.asOf);
+      const isUpper = typeof compactStock.chgPct === 'number' && compactStock.chgPct >= 19.5;
+      const safeSym = sanitizeHistorySymbol(compactStock.symbol);
 
       body.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
           <div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <h2 style="font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: var(--text-primary);">${escapeHtml(stock.symbol)}</h2>
-              <span class="rs-score-badge ${stock.rs >= 85 ? 'rs-super' : 'rs-high'}">RS ${stock.rs} (Universe Rank)</span>
-              <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); font-weight: 600;">${escapeHtml(stock.cap)}</span>
+              <h2 style="font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: var(--text-primary);">${escapeHtml(compactStock.symbol)}</h2>
+              <span class="rs-score-badge ${compactStock.rs >= 85 ? 'rs-super' : 'rs-high'}">RS ${compactStock.rs} (Universe Rank)</span>
+              <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); font-weight: 600;">${escapeHtml(compactStock.cap)}</span>
               ${isUpper ? '<span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--amber-bg); color: var(--amber); font-weight: 700;">≥19.5% MOVE</span>' : ''}
             </div>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">${escapeHtml(stock.name)} • ${escapeHtml(stock.sector)} ${stock.marketCapCr ? `• MCap ₹${stock.marketCapCr.toLocaleString('en-IN')} Cr` : ''}</div>
-            <div class="panel-provenance" id="modal-chart-provenance">As of ${escapeHtml(asOfStr)} • Source: ${escapeHtml(stock.source)}</div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">${escapeHtml(compactStock.name)} • ${escapeHtml(compactStock.sector)} ${compactStock.marketCapCr ? `• MCap ₹${compactStock.marketCapCr.toLocaleString('en-IN')} Cr` : ''}</div>
+            <div class="panel-provenance" id="modal-chart-provenance">As of ${escapeHtml(asOfStr)} • Source: ${escapeHtml(compactStock.source)}</div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 24px; font-weight: 800; font-family: var(--font-mono);">₹${fmtNum(stock.price, 2)}</div>
-            <div class="${stock.chgPct >= 0 ? 'up' : 'down'}" style="font-weight: 700; font-size: 13px; font-family: var(--font-mono);">
-              ${fmtSigned(stock.chgPct, 2, '%')} EOD • ${stock.dist52Pct.toFixed(1)}% from 52W High
+            <div style="font-size: 24px; font-weight: 800; font-family: var(--font-mono);">₹${fmtNum(compactStock.price, 2)}</div>
+            <div class="${(compactStock.chgPct ?? 0) >= 0 ? 'up' : 'down'}" style="font-weight: 700; font-size: 13px; font-family: var(--font-mono);">
+              ${fmtSigned(compactStock.chgPct, 2, '%')} EOD • ${compactStock.dist52Pct != null ? compactStock.dist52Pct.toFixed(1) + '%' : '--'} from 52W High
             </div>
           </div>
         </div>
 
         <!-- 52-WEEK RANGE BAR -->
-        <div style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;">
-          <div style="display: flex; justify-content: space-between; font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">
-            <span>52W Low: ₹${fmtNum(stock.low52, 2)}</span>
-            <span style="color: var(--text-primary); font-weight: 700;">EOD Close: ₹${fmtNum(stock.price, 2)} (${rangePercent.toFixed(0)}% of 52W range)</span>
-            <span>52W High: ₹${fmtNum(stock.high52, 2)}</span>
-          </div>
-          <div class="range52-bar">
-            <div class="range52-fill" style="width: ${rangePercent}%;"></div>
-            <div class="range52-thumb" style="left: ${rangePercent}%;"></div>
-          </div>
+        <div id="modal-range52-box" style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;">
+          <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">Loading 52-week range from data/stocks/${escapeHtml(safeSym)}.json...</div>
         </div>
 
         <!-- REAL DAILY OHLCV CANDLESTICK CHART FROM data/history/<SYMBOL>.json -->
@@ -1996,7 +2650,7 @@
           </div>
 
           <div id="chart-loading-state" style="padding: 40px; text-align: center; font-size: 12px; color: var(--text-secondary);">
-            ⏳ Loading real daily OHLCV bars from data/history/${escapeHtml(sanitizeHistorySymbol(stock.symbol))}.json...
+            ⏳ Loading real daily OHLCV bars from data/history/${escapeHtml(safeSym)}.json...
           </div>
           <canvas id="candlestick-canvas" style="display: none; cursor: crosshair;"></canvas>
         </div>
@@ -2005,12 +2659,12 @@
         <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
             <div>
-              <div style="font-size: 11px; color: var(--cyan-rs); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Backend Quant Matrix (Log Returns × √252)</div>
+              <div style="font-size: 11px; color: var(--cyan-rs); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Backend Quant Matrix (Adjusted Close Log Returns × √252)</div>
               <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Note: 1M statistics use only ~21 trading observations and carry higher estimation noise.</div>
             </div>
             <div style="display: flex; gap: 4px; align-items: center;">
               <span style="font-size: 10px; color: var(--text-tertiary); font-weight: 700;">BENCHMARK:</span>
-              <button class="theme-btn active" id="btn-bm-relevant" style="padding: 4px 8px; font-size: 10px;" onclick="switchBenchmarkInModal('relevant')">${escapeHtml(stock.benchmarkName)}</button>
+              <button class="theme-btn active" id="btn-bm-relevant" style="padding: 4px 8px; font-size: 10px;" onclick="switchBenchmarkInModal('relevant')">${escapeHtml(compactStock.benchmarkName)}</button>
               <button class="theme-btn" id="btn-bm-n500" style="padding: 4px 8px; font-size: 10px;" onclick="switchBenchmarkInModal('n500')">NIFTY 500</button>
             </div>
           </div>
@@ -2051,35 +2705,29 @@
         </div>
 
         <!-- RS MOMENTUM BREAKDOWN & TECHNICAL SUMMARY -->
-        <div style="background: var(--card); border-radius: 8px; border: 1px solid var(--border); padding: 12px; margin-bottom: 14px;">
-          <h4 style="font-size: 11px; color: var(--cyan-rs); text-transform: uppercase; font-weight: 700; margin-bottom: 6px;">Universe RS Return Breakdown (Weights: 40% 3M / 20% 6M / 20% 9M / 20% 12M)</h4>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-family: var(--font-mono); font-size: 12px;">
-            <div>3M Return: <strong class="${stock.ret3M >= 0 ? 'up' : 'down'}">${fmtSigned(stock.ret3M, 1, '%')}</strong></div>
-            <div>6M Return: <strong class="${stock.ret6M >= 0 ? 'up' : 'down'}">${fmtSigned(stock.ret6M, 1, '%')}</strong></div>
-            <div>9M Return: <strong class="${stock.ret9M >= 0 ? 'up' : 'down'}">${fmtSigned(stock.ret9M, 1, '%')}</strong></div>
-            <div>12M Return: <strong class="${stock.ret12M >= 0 ? 'up' : 'down'}">${fmtSigned(stock.ret12M, 1, '%')}</strong></div>
-          </div>
-          <div style="font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); margin-top: 8px;">
-            21 EMA: ₹${fmtNum(stock.ema21, 2)} • 50 SMA: ₹${fmtNum(stock.sma50, 2)} • 200 SMA: ₹${fmtNum(stock.sma200, 2)} • RSI(14): ${stock.rsi14}
-          </div>
+        <div id="modal-rs-breakdown-box" style="background: var(--card); border-radius: 8px; border: 1px solid var(--border); padding: 12px; margin-bottom: 14px;">
+          <h4 style="font-size: 11px; color: var(--cyan-rs); text-transform: uppercase; font-weight: 700; margin-bottom: 6px;">Universe RS Return Breakdown (Adjusted Close • 40% 3M / 20% 6M / 20% 9M / 20% 12M)</h4>
+          <div style="font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono);">Loading adjusted return breakdown...</div>
         </div>
 
         <!-- EXTERNAL QUOTE LINKS -->
         <div style="display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;">
-          <a href="https://www.screener.in/company/${encodeURIComponent(stock.symbol)}/consolidated/" target="_blank" rel="noopener" class="theme-btn" style="text-decoration:none;">📄 Open on Screener.in</a>
-          <a href="https://www.nseindia.com/get-quotes/equity?symbol=${encodeURIComponent(stock.symbol)}" target="_blank" rel="noopener" class="theme-btn" style="text-decoration:none;">🏛️ NSE Quote</a>
+          <a href="https://www.screener.in/company/${encodeURIComponent(compactStock.symbol)}/consolidated/" target="_blank" rel="noopener" class="theme-btn" style="text-decoration:none;">📄 Open on Screener.in</a>
+          <a href="https://www.nseindia.com/get-quotes/equity?symbol=${encodeURIComponent(compactStock.symbol)}" target="_blank" rel="noopener" class="theme-btn" style="text-decoration:none;">🏛️ NSE Quote</a>
           <a href="https://www.bseindia.com/corporates/ann.html" target="_blank" rel="noopener" class="theme-btn" style="text-decoration:none;">📑 BSE Corporate Filings</a>
         </div>
       `;
 
       document.getElementById("stock-modal").classList.add("active");
-      renderQuantSection(stock, 'relevant');
 
-      // Fetch real OHLCV history from data/history/<SYMBOL>.json (and Nifty 500 _CRSLDX.json for RS line)
+      // Load full stock quant detail (data/stocks/<SYMBOL>.json) & OHLCV history (data/history/<SYMBOL>.json)
       try {
-        const histPath = `data/history/${sanitizeHistorySymbol(stock.symbol)}.json`;
+        const detailPath = `data/stocks/${safeSym}.json`;
+        const histPath = `data/history/${safeSym}.json`;
         const n500Path = `data/history/${sanitizeHistorySymbol('^CRSLDX')}.json`;
-        const [histResp, n500Resp] = await Promise.all([
+
+        const [detailResp, histResp, n500Resp] = await Promise.all([
+          compactStock.quant ? Promise.resolve(compactStock) : fetchStaticJson(detailPath).catch(() => compactStock),
           fetchStaticJson(histPath),
           NIFTY500_HISTORY_MAP.size > 0
             ? Promise.resolve(null)
@@ -2091,6 +2739,49 @@
         }
 
         if (activeStockSymbol !== symbol) return; // Modal closed/switched while loading
+
+        const fullStock = detailResp || compactStock;
+        activeStockDetail = fullStock;
+
+        // Render 52W range bar
+        const rangeBox = document.getElementById("modal-range52-box");
+        if (rangeBox && fullStock.high52 != null && fullStock.low52 != null) {
+          const rangePercent = (fullStock.high52 > fullStock.low52)
+            ? Math.min(100, Math.max(0, ((fullStock.price - fullStock.low52) / (fullStock.high52 - fullStock.low52)) * 100))
+            : 50;
+          rangeBox.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">
+              <span>52W Low: ₹${fmtNum(fullStock.low52, 2)}</span>
+              <span style="color: var(--text-primary); font-weight: 700;">EOD Close: ₹${fmtNum(fullStock.price, 2)} (${rangePercent.toFixed(0)}% of 52W range)</span>
+              <span>52W High: ₹${fmtNum(fullStock.high52, 2)}</span>
+            </div>
+            <div class="range52-bar">
+              <div class="range52-fill" style="width: ${rangePercent}%;"></div>
+              <div class="range52-thumb" style="left: ${rangePercent}%;"></div>
+            </div>
+          `;
+        } else if (rangeBox) {
+          rangeBox.style.display = "none";
+        }
+
+        // Render RS breakdown & MAs
+        const rsBox = document.getElementById("modal-rs-breakdown-box");
+        if (rsBox) {
+          rsBox.innerHTML = `
+            <h4 style="font-size: 11px; color: var(--cyan-rs); text-transform: uppercase; font-weight: 700; margin-bottom: 6px;">Universe RS Return Breakdown (Adjusted Close • 40% 3M / 20% 6M / 20% 9M / 20% 12M)</h4>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-family: var(--font-mono); font-size: 12px;">
+              <div>3M Return: <strong class="${(fullStock.ret3M ?? 0) >= 0 ? 'up' : 'down'}">${fmtSigned(fullStock.ret3M, 1, '%')}</strong></div>
+              <div>6M Return: <strong class="${(fullStock.ret6M ?? 0) >= 0 ? 'up' : 'down'}">${fmtSigned(fullStock.ret6M, 1, '%')}</strong></div>
+              <div>9M Return: <strong class="${(fullStock.ret9M ?? 0) >= 0 ? 'up' : 'down'}">${fmtSigned(fullStock.ret9M, 1, '%')}</strong></div>
+              <div>12M Return: <strong class="${(fullStock.ret12M ?? 0) >= 0 ? 'up' : 'down'}">${fmtSigned(fullStock.ret12M, 1, '%')}</strong></div>
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); margin-top: 8px;">
+              21 EMA: ₹${fmtNum(fullStock.ema21, 2)} • 50 SMA: ₹${fmtNum(fullStock.sma50, 2)} • 200 SMA: ₹${fmtNum(fullStock.sma200, 2)} • RSI(14): ${fullStock.rsi14 ?? '--'}
+            </div>
+          `;
+        }
+
+        renderQuantSection(fullStock, 'relevant');
 
         activeStockCandles = computeIndicatorsFromOHLCV(histResp.bars || [], NIFTY500_HISTORY_MAP);
         const provEl = document.getElementById("modal-chart-provenance");
@@ -2515,7 +3206,7 @@
         btnN500?.classList.add("active");
         btnRel?.classList.remove("active");
       }
-      const curStock = STOCKS.find(s => s.symbol === activeStockSymbol);
+      const curStock = activeStockDetail || STOCKS.find(s => s.symbol === activeStockSymbol);
       if (curStock) renderQuantSection(curStock, mode);
     }
 
@@ -2525,6 +3216,7 @@
     function closeModalDirect() {
       document.getElementById("stock-modal")?.classList.remove("active");
       activeStockSymbol = '';
+      activeStockDetail = null;
     }
 
     // -------------------------------------------------------------
@@ -2606,6 +3298,7 @@
         btnCards.classList.add("active"); btnTable.classList.remove("active");
         grid.style.display = "grid"; table.style.display = "none";
       }
+      renderScreener();
     }
 
     function toggleTheme() {
@@ -2626,33 +3319,40 @@
         showToast("No stocks available to export.", "warning");
         return;
       }
-      const headers = ["Symbol", "Name", "Sector", "Cap", "Price", "ChgPct", "RSRank", "Dist52WHighPct", "1Y_SD", "1Y_Beta", "Benchmark"];
+      const headers = ["Symbol", "Name", "Sector", "Cap", "MarketCapCr", "Price", "ChgPct", "RSRank", "Dist52WHighPct", "Alpha3M", "VolRatio", "1Y_SD", "1Y_Beta", "Benchmark"];
       const rows = STOCKS.map(s => [
         s.symbol,
-        `"${s.name.replace(/"/g, '""')}"`,
-        `"${s.sector}"`,
+        `"${String(s.name || '').replace(/"/g, '""')}"`,
+        `"${String(s.sector || '').replace(/"/g, '""')}"`,
         s.cap,
+        s.marketCapCr ?? '',
         s.price,
         s.chgPct,
         s.rs,
         s.dist52Pct,
-        s.quant?.relevant?.['1Y']?.sdStock ?? '',
-        s.quant?.relevant?.['1Y']?.beta ?? '',
+        getStockAlpha3M(s) ?? '',
+        s.volRatio ?? '',
+        getStockSd1Y(s) ?? '',
+        getStockBeta1Y(s) ?? '',
         s.benchmarkName
       ]);
-      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      const csvText = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.setAttribute("href", encodeURI(csvContent));
+      link.setAttribute("href", url);
       link.setAttribute("download", `MarketEdge_Screener_${MARKET_DATA?.meta?.sessionDate || 'EOD'}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast("Screener CSV exported successfully.", "success");
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast(`Exported ${STOCKS.length} stocks to CSV.`, "success");
     }
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeModalDirect();
+        document.getElementById("sector-ms-panel")?.classList.remove("open");
       }
     });
 
