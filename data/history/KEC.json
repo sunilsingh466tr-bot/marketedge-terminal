@@ -3,16 +3,9 @@
   "yahooSymbol": "KEC.NS",
   "name": "KEC International Ltd",
   "asOf": "2026-11-12T15:30:00+05:30",
+  "asOfDisplay": "12 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 875,
-      "h": 881,
-      "l": 861,
-      "c": 866.1,
-      "v": 559869
-    },
     {
       "date": "2025-09-22",
       "o": 866.1,

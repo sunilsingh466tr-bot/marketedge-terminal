@@ -842,6 +842,7 @@
       <div class="brand-title">MarketEdge Terminal</div>
       <span class="badge-laptop">EOD QUANT ENGINE</span>
       <span style="font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono);" id="header-date">As of -- • Source: --</span>
+      <span style="font-size: 11px; color: var(--cyan-rs); font-family: var(--font-mono); font-weight: 700;" id="header-stocks-count">-- of -- stocks loaded</span>
     </div>
 
     <!-- TOP BENCHMARK TICKERS (LOADED EXCLUSIVELY FROM data/market.json) -->
@@ -1436,6 +1437,11 @@
         const el = document.getElementById(id);
         if (el) el.innerHTML = `<div style="padding: 20px; color: var(--red); font-size: 12px; text-align: center;">Data stale / unavailable</div>`;
       });
+      const headerCountEl = document.getElementById("header-stocks-count");
+      if (headerCountEl) {
+        headerCountEl.innerText = "0 of -- stocks loaded";
+        headerCountEl.style.color = "var(--red)";
+      }
       const tbody = document.getElementById("screener-table-body");
       if (tbody) tbody.innerHTML = `<tr><td colspan="14" style="text-align:center;color:var(--red);padding:20px;">Data stale / unavailable</td></tr>`;
     }
@@ -1455,6 +1461,22 @@
       };
 
       setTxt("header-date", mainProv);
+
+      const loadedCount = STOCKS.length;
+      const totalCount = m.universeTotal ?? loadedCount;
+      const failedSymbols = Array.isArray(m.failedSymbols) ? m.failedSymbols : [];
+      const countEl = document.getElementById("header-stocks-count");
+      if (countEl) {
+        countEl.innerText = `${loadedCount} of ${totalCount} stocks loaded`;
+        if (failedSymbols.length > 0) {
+          countEl.style.color = "var(--amber)";
+          countEl.title = `Skipped failed symbols: ${failedSymbols.join(', ')}`;
+        } else {
+          countEl.style.color = "var(--cyan-rs)";
+          countEl.title = `All ${totalCount} universe stocks loaded cleanly`;
+        }
+      }
+
       setTxt("eod-provenance-inline", mainProv);
       setTxt("footer-time", `Generated ${formatISTDateTime(m.generatedAt)} • ${mainProv}`);
 

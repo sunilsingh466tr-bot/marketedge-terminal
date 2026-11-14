@@ -2,17 +2,10 @@
   "symbol": "DIXON",
   "yahooSymbol": "DIXON.NS",
   "name": "Dixon Technologies (India) Ltd",
-  "asOf": "2026-11-12T15:30:00+05:30",
+  "asOf": "2026-11-13T15:30:00+05:30",
+  "asOfDisplay": "13 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 18331,
-      "h": 18400,
-      "l": 18130,
-      "c": 18177,
-      "v": 208525
-    },
     {
       "date": "2025-09-22",
       "o": 18158,
@@ -2268,7 +2261,14 @@
       "l": 12780,
       "c": 12992,
       "v": 296032
+    },
+    {
+      "date": "2026-11-13",
+      "o": 12950,
+      "h": 12952,
+      "l": 12711,
+      "c": 12798,
+      "v": 196350
     }
-  ],
-  "asOfDisplay": "12 Nov 2026, 15:30 IST"
+  ]
 }

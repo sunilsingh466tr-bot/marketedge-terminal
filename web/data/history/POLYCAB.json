@@ -2,17 +2,10 @@
   "symbol": "POLYCAB",
   "yahooSymbol": "POLYCAB.NS",
   "name": "Polycab India Ltd",
-  "asOf": "2026-11-12T15:30:00+05:30",
+  "asOf": "2026-11-13T15:30:00+05:30",
+  "asOfDisplay": "13 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 7440.5,
-      "h": 7568,
-      "l": 7424,
-      "c": 7549,
-      "v": 370166
-    },
     {
       "date": "2025-09-22",
       "o": 7549,
@@ -2268,7 +2261,14 @@
       "l": 7916,
       "c": 8080.5,
       "v": 541933
+    },
+    {
+      "date": "2026-11-13",
+      "o": 8052,
+      "h": 8148,
+      "l": 7880,
+      "c": 7904,
+      "v": 433490
     }
-  ],
-  "asOfDisplay": "12 Nov 2026, 15:30 IST"
+  ]
 }

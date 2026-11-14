@@ -3,16 +3,9 @@
   "yahooSymbol": "KPIL.NS",
   "name": "Kalpataru Projects International",
   "asOf": "2026-11-12T15:30:00+05:30",
+  "asOfDisplay": "12 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 1260,
-      "h": 1276.8,
-      "l": 1254.9,
-      "c": 1269,
-      "v": 155950
-    },
     {
       "date": "2025-09-22",
       "o": 1269,
@@ -2261,6 +2254,5 @@
       "c": 1350.2,
       "v": 129244
     }
-  ],
-  "asOfDisplay": "12 Nov 2026, 15:30 IST"
+  ]
 }

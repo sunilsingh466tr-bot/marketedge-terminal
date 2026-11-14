@@ -2,17 +2,10 @@
   "symbol": "MAZDOCK",
   "yahooSymbol": "MAZDOCK.NS",
   "name": "Mazagon Dock Shipbuilders Ltd",
-  "asOf": "2026-11-12T15:30:00+05:30",
+  "asOf": "2026-11-13T15:30:00+05:30",
+  "asOfDisplay": "13 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 2978.1,
-      "h": 3015,
-      "l": 2969.1,
-      "c": 2985,
-      "v": 846040
-    },
     {
       "date": "2025-09-22",
       "o": 3025,
@@ -2268,6 +2261,14 @@
       "l": 1885.7,
       "c": 1907,
       "v": 504419
+    },
+    {
+      "date": "2026-11-13",
+      "o": 1905,
+      "h": 1919,
+      "l": 1876,
+      "c": 1890,
+      "v": 619040
     }
   ]
 }

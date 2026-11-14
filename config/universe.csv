@@ -1,0 +1,32 @@
+symbol,name,sector,cap,yahoo_symbol
+RELIANCE,Reliance Industries Ltd,Energy & Telecom,Large-Cap,RELIANCE.NS
+TCS,Tata Consultancy Services Ltd,IT Services,Large-Cap,TCS.NS
+HDFCBANK,HDFC Bank Ltd,Banking / Financials,Large-Cap,HDFCBANK.NS
+ICICIBANK,ICICI Bank Ltd,Banking / Financials,Large-Cap,ICICIBANK.NS
+BHARTIARTL,Bharti Airtel Ltd,Telecom,Large-Cap,BHARTIARTL.NS
+SBIN,State Bank of India,Banking / PSU,Large-Cap,SBIN.NS
+INFY,Infosys Ltd,IT Services,Large-Cap,INFY.NS
+LT,Larsen & Toubro Ltd,Capital Goods / EPC,Large-Cap,LT.NS
+TRENT,Trent Ltd,Retail / Consumer,Large-Cap,TRENT.NS
+BEL,Bharat Electronics Ltd,Defence & Aerospace,Large-Cap,BEL.NS
+HAL,Hindustan Aeronautics Ltd,Defence & Aerospace,Large-Cap,HAL.NS
+ETERNAL,Eternal Ltd (Zomato / Blinkit),Consumer Tech,Large-Cap,ETERNAL.NS
+VBL,Varun Beverages Ltd,Retail / FMCG,Large-Cap,VBL.NS
+CGPOWER,CG Power & Industrial Solutions,Power T&D / Infra,Large-Cap,CGPOWER.NS
+SOLARINDS,Solar Industries India Ltd,Defence / Industrial,Large-Cap,SOLARINDS.NS
+DIXON,Dixon Technologies (India) Ltd,Electronics / EMS,Mid-Cap,DIXON.NS
+PERSISTENT,Persistent Systems Ltd,IT Services,Mid-Cap,PERSISTENT.NS
+COFORGE,Coforge Ltd,IT Services,Mid-Cap,COFORGE.NS
+POLYCAB,Polycab India Ltd,Cables & Infra,Mid-Cap,POLYCAB.NS
+SUZLON,Suzlon Energy Ltd,Power & Renewable,Mid-Cap,SUZLON.NS
+KAYNES,Kaynes Technology India Ltd,Electronics / EMS,Mid-Cap,KAYNES.NS
+MAZDOCK,Mazagon Dock Shipbuilders Ltd,Defence / Shipbuilding,Mid-Cap,MAZDOCK.NS
+MOTHERSON,Samvardhana Motherson Intl,Auto Components,Mid-Cap,MOTHERSON.NS
+TATAPOWER,Tata Power Company Ltd,Power & Renewable,Mid-Cap,TATAPOWER.NS
+HFCL,HFCL Ltd,Telecom / Infra,Mid-Cap,HFCL.NS
+DATAPATTNS,Data Patterns (India) Ltd,Defence & Aerospace,Small-Cap,DATAPATTNS.NS
+KPIL,Kalpataru Projects International,Power T&D / Infra,Small-Cap,KPIL.NS
+TDPOWERSYS,TD Power Systems Ltd,Power & Renewable,Small-Cap,TDPOWERSYS.NS
+TITAGARH,Titagarh Rail Systems Ltd,Railways,Small-Cap,TITAGARH.NS
+KEC,KEC International Ltd,Power T&D / Infra,Small-Cap,KEC.NS
+TEJASNET,Tejas Networks Ltd,Telecom / Tech,Small-Cap,TEJASNET.NS

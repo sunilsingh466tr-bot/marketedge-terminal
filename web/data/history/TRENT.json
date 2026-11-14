@@ -3,16 +3,9 @@
   "yahooSymbol": "TRENT.NS",
   "name": "Trent Ltd",
   "asOf": "2026-11-12T15:30:00+05:30",
+  "asOfDisplay": "12 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 5149,
-      "h": 5158,
-      "l": 5074,
-      "c": 5080,
-      "v": 1105187
-    },
     {
       "date": "2025-09-22",
       "o": 5089.5,
@@ -2269,6 +2262,5 @@
       "c": 3180,
       "v": 611416
     }
-  ],
-  "asOfDisplay": "12 Nov 2026, 15:30 IST"
+  ]
 }

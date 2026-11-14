@@ -2,17 +2,10 @@
   "symbol": "MOTHERSON",
   "yahooSymbol": "MOTHERSON.NS",
   "name": "Samvardhana Motherson Intl",
-  "asOf": "2026-11-12T15:30:00+05:30",
+  "asOf": "2026-11-13T15:30:00+05:30",
+  "asOfDisplay": "13 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 108.98,
-      "h": 110.18,
-      "l": 108.56,
-      "c": 109.08,
-      "v": 13983683
-    },
     {
       "date": "2025-09-22",
       "o": 109.08,
@@ -2268,7 +2261,14 @@
       "l": 164.86,
       "c": 165.83,
       "v": 17415206
+    },
+    {
+      "date": "2026-11-13",
+      "o": 165.83,
+      "h": 166.98,
+      "l": 163.85,
+      "c": 164.8,
+      "v": 8182353
     }
-  ],
-  "asOfDisplay": "12 Nov 2026, 15:30 IST"
+  ]
 }

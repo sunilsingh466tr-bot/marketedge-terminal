@@ -2,17 +2,10 @@
   "symbol": "KAYNES",
   "yahooSymbol": "KAYNES.NS",
   "name": "Kaynes Technology India Ltd",
-  "asOf": "2026-11-12T15:30:00+05:30",
+  "asOf": "2026-11-13T15:30:00+05:30",
+  "asOfDisplay": "13 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 7225,
-      "h": 7344.5,
-      "l": 6882,
-      "c": 7151.5,
-      "v": 1246689
-    },
     {
       "date": "2025-09-22",
       "o": 7100,
@@ -2268,7 +2261,14 @@
       "l": 3395.1,
       "c": 3484,
       "v": 723113
+    },
+    {
+      "date": "2026-11-13",
+      "o": 3484,
+      "h": 3484.1,
+      "l": 3398.1,
+      "c": 3430,
+      "v": 553269
     }
-  ],
-  "asOfDisplay": "12 Nov 2026, 15:30 IST"
+  ]
 }

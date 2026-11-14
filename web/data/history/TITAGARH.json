@@ -3,16 +3,9 @@
   "yahooSymbol": "TITAGARH.NS",
   "name": "Titagarh Rail Systems Ltd",
   "asOf": "2026-11-12T15:30:00+05:30",
+  "asOfDisplay": "12 Nov 2026, 15:30 IST",
   "source": "Yahoo Finance Daily OHLCV",
   "bars": [
-    {
-      "date": "2025-09-19",
-      "o": 947,
-      "h": 958,
-      "l": 942.6,
-      "c": 955.35,
-      "v": 1130470
-    },
     {
       "date": "2025-09-22",
       "o": 954.05,
@@ -2269,6 +2262,5 @@
       "c": 731.3,
       "v": 662073
     }
-  ],
-  "asOfDisplay": "12 Nov 2026, 15:30 IST"
+  ]
 }
