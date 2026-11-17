@@ -3,18 +3,19 @@
  * scripts/build-static-data.js
  * Static data generator for GitHub Pages (no server required).
  * Uses the rule-based two-stage universe builder & backend quant engine in lib/marketService.js:
- *   - config/universe.csv (auto-updated & cached monthly for sectors)
- *   - web/data/market.json (compact table fields + meta with universe size, skipped, and failed lists)
- *   - web/data/stocks/<SYMBOL>.json (full quant detail & technicals per stock)
- *   - web/data/history/<SYMBOL>.json (last 300 daily bars per stock + ^CRSLDX -> _CRSLDX.json)
+ *   - Routes Yahoo Finance calls through Cloudflare Worker when YAHOO_WORKER_URL / WORKER_URL is set.
+ *   - Writes web/data/market.json, web/data/stocks/<SYMBOL>.json, web/data/history/<SYMBOL>.json.
  *
- * Respects MAX_STOCKS environment variable for quick test runs.
- * Failure policy: Never writes fake or invented numbers. Logs errors and preserves previous files intact.
+ * Strict Freshness / Loud Failure Policy:
+ *   - Never writes fake or invented numbers.
+ *   - Fails loudly (exit code 1) if the fetched sessionDate !== expected latest NSE trading session
+ *     or if live market fetch failed, preventing silent stale deploys on GitHub Actions.
  */
 
 const fs = require('fs');
 const path = require('path');
 const { getMarketData } = require('../lib/marketService');
+const { getLatestCompletedSessionDate } = require('../lib/nseCalendar');
 
 const WEB_DATA_DIR = path.join(__dirname, '..', 'web', 'data');
 const WEB_STOCKS_DIR = path.join(WEB_DATA_DIR, 'stocks');
@@ -37,8 +38,9 @@ function writeJsonAtomic(filePath, obj, pretty = false) {
 
 async function main() {
   const startedAt = Date.now();
+  const expectedSession = getLatestCompletedSessionDate(new Date());
   const maxStocks = process.env.MAX_STOCKS ? ` (MAX_STOCKS=${process.env.MAX_STOCKS})` : '';
-  console.log(`Building rule-based NSE static market dataset${maxStocks}...`);
+  console.log(`Building rule-based NSE static market dataset${maxStocks} • Expected EOD session: ${expectedSession}...`);
 
   const marketData = await getMarketData(true);
 
@@ -52,10 +54,18 @@ async function main() {
     marketData.indices.length === 0
   ) {
     const reason = marketData?.meta?.liveError || 'Upstream market feed failed or returned fallback snapshot';
-    console.error(`ERROR: Failed to build fresh market data (${reason}). Keeping previous web/data/ files without writing fake numbers.`);
-    if (!fs.existsSync(MARKET_OUT_FILE)) {
-      process.exitCode = 1;
-    }
+    console.error(`ERROR [STALE/UNAVAILABLE]: Failed to build fresh market data (${reason}). Preserving previous web/data/ files and failing workflow loudly.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const actualSession = marketData.meta.sessionDate;
+  if (!actualSession || actualSession !== expectedSession) {
+    console.error(
+      `ERROR [SESSION MISMATCH]: Fetched EOD sessionDate="${actualSession || 'none'}" does NOT match expected latest NSE trading day "${expectedSession}" ` +
+      `(${marketData.meta.tradingDaysOld ?? '?'} trading day(s) behind). Refusing to overwrite web/data/market.json or silently deploy stale data.`
+    );
+    process.exitCode = 1;
     return;
   }
 
@@ -66,7 +76,7 @@ async function main() {
     console.log(`Skipped ${skippedSymbols.length} stock(s) on history/volume rules (<252 bars or >10% zero-vol).`);
   }
   if (failedSymbols.length > 0) {
-    console.error(`ERROR: Failed to fetch ${failedSymbols.length} stock(s) after retries: ${failedSymbols.join(', ')}. Recorded in meta.failedSymbols; preserving previous files if any.`);
+    console.error(`WARNING: Failed to fetch ${failedSymbols.length} stock(s) after retries: ${failedSymbols.join(', ')}. Recorded in meta.failedSymbols.`);
   }
 
   // 1. Write compact web/data/market.json
@@ -103,7 +113,7 @@ async function main() {
 
   const elapsedSec = ((Date.now() - startedAt) / 1000).toFixed(1);
   console.log(
-    `Build complete in ${elapsedSec}s: web/data/market.json (${marketData.stocks.length}/${marketData.meta.universeTotal} stocks, ${skippedSymbols.length} skipped, ${failedSymbols.length} failed), ` +
+    `Build complete in ${elapsedSec}s: session=${actualSession}, web/data/market.json (${marketData.stocks.length}/${marketData.meta.universeTotal} stocks, ${skippedSymbols.length} skipped, ${failedSymbols.length} failed), ` +
     `${writtenDetails} web/data/stocks/*.json, ${writtenHistories} web/data/history/*.json.`
   );
 }

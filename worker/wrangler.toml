@@ -1,0 +1,6 @@
+name = "marketedge-yahoo-worker"
+main = "index.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+QUOTE_CACHE_TTL = "20"

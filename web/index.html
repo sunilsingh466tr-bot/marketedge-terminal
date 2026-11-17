@@ -240,10 +240,30 @@
       font-weight: 700;
       letter-spacing: 0.4px;
     }
+    .stream-status-pill.live {
+      background: var(--green-bg);
+      border-color: var(--green);
+      color: var(--green);
+    }
     .stream-status-pill.error {
       background: var(--red-bg);
       border-color: var(--red);
       color: var(--red);
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      display: none;
+      animation: livePulse 1.6s infinite;
+    }
+    .stream-status-pill.live .live-dot {
+      display: inline-block;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
     }
     .stream-controls-group {
       display: flex;
@@ -1038,18 +1058,31 @@
     </div>
   </div>
 
-  <!-- EOD SESSION STATUS BAR -->
+  <!-- EOD / LIVE SESSION STATUS BAR -->
   <div class="stream-control-bar">
     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
       <div class="stream-status-pill" id="eod-status-pill">
-        <span id="eod-status-text">EOD SESSION • LOADING data/market.json</span>
+        <span class="live-dot" id="live-status-dot"></span>
+        <span id="eod-status-text">EOD • LOADING data/market.json</span>
       </div>
       <span style="color: var(--text-secondary);" id="eod-cache-status">Snapshot: --</span>
     </div>
 
     <div class="stream-controls-group">
       <span style="color: var(--text-tertiary);" id="eod-provenance-inline">As of -- • Source: --</span>
+      <button class="stream-btn" id="btn-worker-config" onclick="toggleWorkerConfigBar()" title="Configure Cloudflare Worker URL for live intraday quotes">⚙ Worker URL</button>
       <button class="stream-btn" onclick="loadMarketData(true)">🔄 Reload Snapshot</button>
+    </div>
+  </div>
+
+  <!-- WORKER URL CONFIG BAR (OPTIONAL OVERRIDE FOR GITHUB PAGES) -->
+  <div id="worker-config-bar" style="display:none; background: var(--card); border-bottom: 1px solid var(--border); padding: 8px 28px; font-family: var(--font-mono); font-size: 11px;">
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; max-width:1600px; margin:0 auto;">
+      <span style="font-weight:700; color:var(--text-secondary);">Cloudflare Worker URL:</span>
+      <input type="url" id="worker-url-input" class="screener-input" style="max-width:460px; padding:5px 10px; font-size:11px; font-family:var(--font-mono);" placeholder="https://marketedge-yahoo-worker.<subdomain>.workers.dev">
+      <button class="stream-btn" onclick="saveWorkerUrlFromInput()" style="border-color:var(--cyan-rs); color:var(--cyan-rs);">Save & Poll</button>
+      <button class="stream-btn" onclick="clearCustomWorkerUrl()">Reset</button>
+      <button class="stream-btn" onclick="toggleWorkerConfigBar()">Close</button>
     </div>
   </div>
 
@@ -1478,6 +1511,11 @@
       '2026-10-02', '2026-10-20', '2026-11-10', '2026-11-24', '2026-12-25'
     ]);
 
+    let livePollTimer = null;
+    let isLivePollInflight = false;
+    let isLiveOverlayActive = false;
+    let liveLastIST = '';
+
     function getISTComponents(date = new Date()) {
       const ist = new Date(date.getTime() + 5.5 * 3600 * 1000);
       const y = ist.getUTCFullYear();
@@ -1486,7 +1524,8 @@
       return {
         dateStr: `${y}-${m}-${d}`,
         hours: ist.getUTCHours(),
-        minutes: ist.getUTCMinutes()
+        minutes: ist.getUTCMinutes(),
+        dayOfWeek: ist.getUTCDay()
       };
     }
 
@@ -1495,6 +1534,15 @@
       const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
       if (dow === 0 || dow === 6) return false;
       return !NSE_HOLIDAYS.has(dateStr);
+    }
+
+    function isLiveMarketHoursIST(date = new Date()) {
+      const { dateStr, hours, minutes, dayOfWeek } = getISTComponents(date);
+      if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+      if (NSE_HOLIDAYS.has(dateStr)) return false;
+      const minsOfDay = hours * 60 + minutes;
+      // 09:15 IST (555) through 15:29 IST (< 930); switches to EOD at 15:30 IST
+      return minsOfDay >= (9 * 60 + 15) && minsOfDay < (15 * 60 + 30);
     }
 
     function shiftCalendarDay(dateStr, delta) {
@@ -1627,16 +1675,33 @@
         RESULTS = data.results?.items || [];
         EARNINGS_RADAR = data.earningsRadar?.items || [];
 
-        // Frontend trading-day staleness validation
+        // Snapshot EOD baselines on every stock & index so switching back to EOD after 15:30 IST is exact
+        INDICES.forEach(idx => {
+          idx.eodPrice = idx.price;
+          idx.eodChg = idx.chg;
+          idx.eodChgPct = idx.chgPct;
+          idx.isLive = false;
+        });
+        STOCKS.forEach(s => {
+          s.eodPrice = s.price;
+          s.eodChgPct = s.chgPct;
+          s.eodDist52Pct = s.dist52Pct;
+          s.inferredHigh52 = (s.price != null && s.dist52Pct != null && s.dist52Pct < 99.9)
+            ? Number((s.price / (1 - s.dist52Pct / 100)).toFixed(2))
+            : null;
+          s.isLive = false;
+        });
+
+        // Strict frontend trading-day staleness check: red banner if file date is older than last trading day
         const expectedSession = getLatestCompletedTradingDay();
         const sessionDate = data.meta.sessionDate || (data.meta.asOf ? data.meta.asOf.slice(0, 10) : null);
         const daysBehind = countTradingDaysBetween(sessionDate, expectedSession);
-        const isStale = Boolean(data.meta.isStale) || daysBehind > 1;
+        const isStale = Boolean(data.meta.isStale) || !sessionDate || sessionDate < expectedSession || daysBehind >= 1;
 
         if (isStale) {
           showBanner(
             'error',
-            `Data stale / unavailable — latest dataset session is ${sessionDate || 'unknown'} (${daysBehind} trading days behind ${expectedSession}).`,
+            `Stale data — file session is ${sessionDate || 'unknown'} (${daysBehind} trading day(s) older than last trading day ${expectedSession}).`,
             true
           );
           document.getElementById("header-status-dot")?.classList.add("error");
@@ -1657,6 +1722,9 @@
         renderResults();
         renderEarnings();
         renderIndices();
+
+        // Start or stop 20-30s live intraday Worker overlay depending on 9:15-15:30 IST weekday market hours
+        initOrUpdateLiveOverlay(true);
 
         if (forceRefresh) {
           showToast(`Market snapshot reloaded (Session: ${sessionDate})`, "success");
@@ -1772,19 +1840,274 @@
       setTxt("eod-provenance-inline", mainProv);
       setTxt("footer-time", `Generated ${formatISTDateTime(m.generatedAt)} • ${mainProv}`);
 
-      const cacheInfo = m.fromSnapshot
-        ? 'Served from previous snapshot (live refresh degraded)'
-        : `Static EOD snapshot (${m.generatedAtIST || formatISTDateTime(m.generatedAt)})`;
+      const cacheInfo = isLiveOverlayActive
+        ? `Live batched overlay active (every 25s • Worker 20s cache) • Base EOD: ${m.sessionDate || '--'}`
+        : (m.fromSnapshot
+          ? 'Served from previous snapshot (live refresh degraded)'
+          : `Static EOD snapshot (${m.generatedAtIST || formatISTDateTime(m.generatedAt)})`);
       setTxt("eod-cache-status", cacheInfo);
-      setTxt("eod-status-text", `EOD SESSION SETTLED (${m.sessionDate || '--'})`);
+
+      const pill = document.getElementById("eod-status-pill");
+      if (isLiveOverlayActive && liveLastIST) {
+        pill?.classList.remove("error");
+        pill?.classList.add("live");
+        setTxt("eod-status-text", `Live (delayed) • ${liveLastIST}`);
+        setTxt("eod-provenance-inline", `Live (delayed) • ${liveLastIST} • Source: Yahoo Finance via Worker`);
+      } else {
+        pill?.classList.remove("live");
+        setTxt("eod-status-text", `EOD • ${m.sessionDate || '--'}`);
+      }
 
       setTxt("fii-provenance", `As of ${FII_DII?.asOfDisplay || asOfStr} • Source: ${FII_DII?.source || 'NSE Cash Market'}`);
       setTxt("breadth-provenance", `As of ${BREADTH?.asOf || asOfStr} • Source: ${BREADTH?.source || 'NSE Market Breadth'}`);
       setTxt("bullets-provenance", mainProv);
-      setTxt("screener-provenance", `As of ${asOfStr} • Source: Yahoo Finance (NSE EOD) & Backend Quant Engine`);
+      setTxt("screener-provenance", isLiveOverlayActive && liveLastIST
+        ? `Live (delayed) • ${liveLastIST} • Source: Yahoo Finance Worker (Overlay on EOD Quant)`
+        : `As of ${asOfStr} • Source: Yahoo Finance (NSE EOD) & Backend Quant Engine`);
       setTxt("results-provenance", `As of ${MARKET_DATA.results?.asOf || asOfStr} • Source: ${MARKET_DATA.results?.source || 'Yahoo Finance Quarterly Financials'}`);
       setTxt("radar-provenance", `As of ${MARKET_DATA.earningsRadar?.asOf || asOfStr} • Source: ${MARKET_DATA.earningsRadar?.source || 'NSE Corporate Event Calendar API'}`);
-      setTxt("indices-provenance", `As of ${asOfStr} • Source: Yahoo Finance (NSE Indices EOD)`);
+      setTxt("indices-provenance", isLiveOverlayActive && liveLastIST
+        ? `Live (delayed) • ${liveLastIST} • Source: Yahoo Finance Worker (Overlay)`
+        : `As of ${asOfStr} • Source: Yahoo Finance (NSE Indices EOD)`);
+    }
+
+    // -------------------------------------------------------------
+    // LIVE INTRADAY WORKER OVERLAY (9:15 - 15:30 IST WEEKDAYS)
+    // -------------------------------------------------------------
+    function getResolvedWorkerUrl() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const qWorker = (params.get('worker') || '').trim().replace(/\/+$/, '');
+        if (/^https?:\/\//i.test(qWorker)) {
+          localStorage.setItem('marketedge_worker_url', qWorker);
+          return qWorker;
+        }
+      } catch (e) {}
+
+      const stored = (localStorage.getItem('marketedge_worker_url') || '').trim().replace(/\/+$/, '');
+      if (/^https?:\/\//i.test(stored)) return stored;
+
+      const metaUrl = (MARKET_DATA?.meta?.workerUrl || '').trim().replace(/\/+$/, '');
+      if (/^https?:\/\//i.test(metaUrl)) return metaUrl;
+
+      // Local Express / preview server hosts /api/worker/quotes seamlessly when external Cloudflare Worker URL isn't set
+      const host = window.location.hostname || '';
+      if (window.location.protocol !== 'file:' && !host.endsWith('github.io')) {
+        return 'api/worker';
+      }
+      return '';
+    }
+
+    function toggleWorkerConfigBar() {
+      const bar = document.getElementById("worker-config-bar");
+      const input = document.getElementById("worker-url-input");
+      if (!bar) return;
+      const show = bar.style.display === "none";
+      bar.style.display = show ? "block" : "none";
+      if (show && input) {
+        input.value = localStorage.getItem('marketedge_worker_url') || MARKET_DATA?.meta?.workerUrl || '';
+      }
+    }
+
+    function saveWorkerUrlFromInput() {
+      const val = (document.getElementById("worker-url-input")?.value || '').trim().replace(/\/+$/, '');
+      if (val && !/^https?:\/\//i.test(val)) {
+        showToast("Worker URL must start with https:// or http://", "warning");
+        return;
+      }
+      if (val) {
+        localStorage.setItem('marketedge_worker_url', val);
+        showToast("Cloudflare Worker URL saved.", "success");
+      } else {
+        localStorage.removeItem('marketedge_worker_url');
+      }
+      toggleWorkerConfigBar();
+      initOrUpdateLiveOverlay(true);
+    }
+
+    function clearCustomWorkerUrl() {
+      localStorage.removeItem('marketedge_worker_url');
+      const input = document.getElementById("worker-url-input");
+      if (input) input.value = MARKET_DATA?.meta?.workerUrl || '';
+      showToast("Cleared custom Worker URL.", "info");
+      initOrUpdateLiveOverlay(true);
+    }
+
+    function stopLiveOverlayAndSwitchToEOD() {
+      if (livePollTimer) {
+        clearInterval(livePollTimer);
+        livePollTimer = null;
+      }
+      if (isLiveOverlayActive) {
+        INDICES.forEach(idx => {
+          if (idx.eodPrice != null) idx.price = idx.eodPrice;
+          idx.chg = idx.eodChg;
+          idx.chgPct = idx.eodChgPct;
+          idx.isLive = false;
+        });
+        STOCKS.forEach(s => {
+          if (s.eodPrice != null) s.price = s.eodPrice;
+          if (s.eodChgPct != null) s.chgPct = s.eodChgPct;
+          if (s.eodDist52Pct != null) s.dist52Pct = s.eodDist52Pct;
+          s.isLive = false;
+        });
+        isLiveOverlayActive = false;
+        liveLastIST = '';
+        renderHeaderTickers();
+        renderIndices();
+        renderScreener();
+        updateAllProvenance();
+      } else {
+        const pill = document.getElementById("eod-status-pill");
+        pill?.classList.remove("live");
+        const sess = MARKET_DATA?.meta?.sessionDate || '--';
+        const txt = document.getElementById("eod-status-text");
+        if (txt) txt.innerText = `EOD • ${sess}`;
+      }
+    }
+
+    function initOrUpdateLiveOverlay(runImmediately = false) {
+      if (livePollTimer) {
+        clearInterval(livePollTimer);
+        livePollTimer = null;
+      }
+      if (!MARKET_DATA || !isLiveMarketHoursIST()) {
+        stopLiveOverlayAndSwitchToEOD();
+        return;
+      }
+
+      const workerBase = getResolvedWorkerUrl();
+      if (!workerBase) {
+        const txt = document.getElementById("eod-status-text");
+        if (txt) txt.innerText = `EOD • Set Worker URL for Live (delayed)`;
+        return;
+      }
+
+      const rawInterval = Number(MARKET_DATA?.meta?.livePollIntervalMs || 25000);
+      const pollMs = Math.min(30000, Math.max(20000, Number.isFinite(rawInterval) ? rawInterval : 25000));
+
+      if (runImmediately) {
+        pollLiveWorkerQuotes();
+      }
+      livePollTimer = setInterval(() => {
+        if (!isLiveMarketHoursIST()) {
+          stopLiveOverlayAndSwitchToEOD();
+          return;
+        }
+        pollLiveWorkerQuotes();
+      }, pollMs);
+    }
+
+    async function pollLiveWorkerQuotes() {
+      if (isLivePollInflight || !MARKET_DATA || !isLiveMarketHoursIST()) return;
+      const workerBase = getResolvedWorkerUrl();
+      if (!workerBase) return;
+
+      isLivePollInflight = true;
+      try {
+        // Gather all index + universe equity Yahoo symbols and sort for deterministic 20s Worker edge caching
+        const symbolSet = new Set();
+        INDICES.forEach(idx => {
+          if (idx.yahooSymbol) symbolSet.add(idx.yahooSymbol.toUpperCase());
+        });
+        STOCKS.forEach(s => {
+          const ySym = (s.yahooSymbol || `${s.symbol}.NS`).toUpperCase();
+          symbolSet.add(ySym);
+        });
+        const allSymbols = Array.from(symbolSet).sort();
+        if (allSymbols.length === 0) return;
+
+        // Send all symbols in batched GET calls of 150 symbols (concurrency 4)
+        const chunkSize = 150;
+        const chunks = [];
+        for (let i = 0; i < allSymbols.length; i += chunkSize) {
+          chunks.push(allSymbols.slice(i, i + chunkSize));
+        }
+
+        const mergedQuotes = Object.create(null);
+        let latestEpoch = 0;
+        let fallbackIST = '';
+        let cursor = 0;
+        const concurrency = Math.min(4, chunks.length);
+
+        async function runWorkerBatch() {
+          while (cursor < chunks.length) {
+            const chunk = chunks[cursor++];
+            const url = `${workerBase}/quotes?symbols=${encodeURIComponent(chunk.join(','))}`;
+            const resp = await fetch(url, { cache: 'default' });
+            if (!resp.ok) continue;
+            const json = await resp.json();
+            if (json && json.quotes) {
+              Object.assign(mergedQuotes, json.quotes);
+            }
+            if (json && json.asOfIST) fallbackIST = json.asOfIST;
+            if (json && json.quotes) {
+              for (const q of Object.values(json.quotes)) {
+                if (q && q.time && q.time > latestEpoch) latestEpoch = q.time;
+              }
+            }
+          }
+        }
+
+        await Promise.all(Array.from({ length: concurrency }, () => runWorkerBatch()));
+
+        const updatedCount = Object.keys(mergedQuotes).length;
+        if (updatedCount === 0) return;
+
+        // Overlay onto INDICES (header ticker + Indices Matrix)
+        INDICES.forEach(idx => {
+          const q = mergedQuotes[(idx.yahooSymbol || '').toUpperCase()];
+          if (!q || q.price == null) return;
+          idx.price = q.price;
+          if (q.chg != null) idx.chg = q.chg;
+          if (q.chgPct != null) idx.chgPct = q.chgPct;
+          if (q.high52 != null) idx.high52 = q.high52;
+          if (q.low52 != null) idx.low52 = q.low52;
+          idx.isLive = true;
+        });
+
+        // Overlay onto STOCKS (screener table + cards)
+        STOCKS.forEach(s => {
+          const ySym = (s.yahooSymbol || `${s.symbol}.NS`).toUpperCase();
+          const q = mergedQuotes[ySym];
+          if (!q || q.price == null) return;
+          s.price = q.price;
+          if (q.chgPct != null) s.chgPct = q.chgPct;
+          const h52 = q.high52 || s.inferredHigh52;
+          if (h52 && h52 > 0) {
+            const effectiveH52 = Math.max(h52, q.price);
+            s.dist52Pct = Number((((effectiveH52 - q.price) / effectiveH52) * 100).toFixed(2));
+          }
+          s.isLive = true;
+        });
+
+        const { hours, minutes } = getISTComponents(latestEpoch > 0 ? new Date(latestEpoch * 1000) : new Date());
+        liveLastIST = latestEpoch > 0
+          ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} IST`
+          : (fallbackIST || `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} IST`);
+        isLiveOverlayActive = true;
+
+        renderHeaderTickers();
+        renderIndices();
+        renderScreener();
+        updateAllProvenance();
+
+        // If a stock dossier modal is open, refresh its header price & chgPct cleanly
+        if (activeStockSymbol) {
+          const cur = STOCKS.find(x => x.symbol === activeStockSymbol);
+          const mp = document.getElementById("modal-live-price");
+          const mc = document.getElementById("modal-live-chg");
+          if (cur && mp && mc) {
+            mp.innerText = `₹${fmtNum(cur.price, 2)}`;
+            mc.className = (cur.chgPct ?? 0) >= 0 ? 'up' : 'down';
+            mc.innerText = `${fmtSigned(cur.chgPct, 2, '%')} LIVE • ${cur.dist52Pct != null ? cur.dist52Pct.toFixed(1) + '%' : '--'} from 52W High`;
+          }
+        }
+      } catch (err) {
+        console.warn('Live Worker overlay poll failed:', err.message);
+      } finally {
+        isLivePollInflight = false;
+      }
     }
 
     // -------------------------------------------------------------
@@ -2610,9 +2933,9 @@
             <div class="panel-provenance" id="modal-chart-provenance">As of ${escapeHtml(asOfStr)} • Source: ${escapeHtml(compactStock.source)}</div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 24px; font-weight: 800; font-family: var(--font-mono);">₹${fmtNum(compactStock.price, 2)}</div>
-            <div class="${(compactStock.chgPct ?? 0) >= 0 ? 'up' : 'down'}" style="font-weight: 700; font-size: 13px; font-family: var(--font-mono);">
-              ${fmtSigned(compactStock.chgPct, 2, '%')} EOD • ${compactStock.dist52Pct != null ? compactStock.dist52Pct.toFixed(1) + '%' : '--'} from 52W High
+            <div id="modal-live-price" style="font-size: 24px; font-weight: 800; font-family: var(--font-mono);">₹${fmtNum(compactStock.price, 2)}</div>
+            <div id="modal-live-chg" class="${(compactStock.chgPct ?? 0) >= 0 ? 'up' : 'down'}" style="font-weight: 700; font-size: 13px; font-family: var(--font-mono);">
+              ${fmtSigned(compactStock.chgPct, 2, '%')} ${compactStock.isLive ? 'LIVE' : 'EOD'} • ${compactStock.dist52Pct != null ? compactStock.dist52Pct.toFixed(1) + '%' : '--'} from 52W High
             </div>
           </div>
         </div>
