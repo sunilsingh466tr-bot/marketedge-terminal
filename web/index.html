@@ -1706,6 +1706,7 @@
           );
           document.getElementById("header-status-dot")?.classList.add("error");
           document.getElementById("eod-status-pill")?.classList.add("error");
+          triggerServerEodSyncIfAvailable(sessionDate, expectedSession, daysBehind);
         } else {
           hideBanner();
           document.getElementById("header-status-dot")?.classList.remove("error");
@@ -1744,6 +1745,52 @@
         document.getElementById("eod-status-pill")?.classList.add("error");
         showBanner('error', `Data stale / unavailable (${err.message}). Never using invented or fallback numbers.`, true);
         renderUnavailableState(err.message);
+      }
+    }
+
+    let serverSyncWatchTimer = null;
+    async function triggerServerEodSyncIfAvailable(sessionDate, expectedSession, daysBehind) {
+      const host = window.location.hostname || '';
+      if (window.location.protocol === 'file:' || host.endsWith('github.io')) return;
+      try {
+        const resp = await fetch('api/sync-static', { method: 'POST', cache: 'no-store' });
+        if (!resp.ok) return;
+        const status = await resp.json();
+        if (status && status.syncing) {
+          showBanner(
+            'error',
+            `Stale data — file session is ${sessionDate || 'unknown'} (${daysBehind} trading day(s) older than last trading day ${expectedSession}). Backend EOD rebuild is running now — will refresh automatically...`,
+            true
+          );
+          if (!serverSyncWatchTimer) {
+            serverSyncWatchTimer = setInterval(async () => {
+              try {
+                const stResp = await fetch('api/sync-status', { cache: 'no-store' });
+                if (!stResp.ok) {
+                  clearInterval(serverSyncWatchTimer);
+                  serverSyncWatchTimer = null;
+                  return;
+                }
+                const st = await stResp.json();
+                if (!st.syncing && !st.isStale) {
+                  clearInterval(serverSyncWatchTimer);
+                  serverSyncWatchTimer = null;
+                  loadMarketData(false);
+                } else if (!st.syncing && st.isStale && st.lastSyncResult && !st.lastSyncResult.ok) {
+                  clearInterval(serverSyncWatchTimer);
+                  serverSyncWatchTimer = null;
+                  showBanner(
+                    'error',
+                    `Stale data — file session is ${sessionDate || 'unknown'} (${daysBehind} trading day(s) older than ${expectedSession}). Upstream refresh waiting: ${st.lastSyncResult.reason || 'EOD not published yet'}.`,
+                    true
+                  );
+                }
+              } catch (e) {}
+            }, 15000);
+          }
+        }
+      } catch (e) {
+        // Ignore gracefully on pure static hosting
       }
     }
 

@@ -7,6 +7,7 @@
 const express = require('express');
 const path = require('path');
 const { getMarketData, getStockDetail, getSymbolHistory, loadScreenerConfig } = require('./lib/marketService');
+const { syncStaticData, readCurrentStaticSessionDate } = require('./lib/staticSync');
 const { fetchLiveQuotesCached, resolveWorkerUrl } = require('./lib/yahooClient');
 const { getLatestCompletedSessionDate, formatISTDateTime } = require('./lib/nseCalendar');
 
@@ -117,6 +118,91 @@ app.get('/api/history/:symbol', async (req, res) => {
   }
 });
 
+// Background static web/data sync manager (keeps live Express preview web/data/market.json fresh after 15:30 IST close)
+let activeSyncPromise = null;
+let lastSyncResult = null;
+
+function ensureStaticDataFresh(force = false) {
+  const expected = getLatestCompletedSessionDate(new Date());
+  const currentSession = readCurrentStaticSessionDate();
+  if (!force && currentSession === expected) {
+    return null;
+  }
+  if (activeSyncPromise) {
+    return activeSyncPromise;
+  }
+
+  console.log(`Static data sync started: current="${currentSession || 'none'}", expected="${expected}"`);
+  activeSyncPromise = syncStaticData({ force: true, allowStaleWrite: false })
+    .then(res => {
+      lastSyncResult = {
+        at: new Date().toISOString(),
+        ok: res.ok,
+        code: res.code,
+        expectedSession: res.expectedSession,
+        actualSession: res.actualSession,
+        reason: res.reason || null
+      };
+      if (res.ok) {
+        console.log(`Static data sync complete: session=${res.sessionDate}, stocks=${res.stocksCount}`);
+      } else {
+        console.warn(`Static data sync did not complete (${res.code}): ${res.reason}`);
+      }
+      return res;
+    })
+    .catch(err => {
+      lastSyncResult = {
+        at: new Date().toISOString(),
+        ok: false,
+        code: 'ERROR',
+        expectedSession: expected,
+        actualSession: currentSession,
+        reason: err.message
+      };
+      console.error('Static data sync failed:', err.message);
+      return lastSyncResult;
+    })
+    .finally(() => {
+      activeSyncPromise = null;
+    });
+
+  return activeSyncPromise;
+}
+
+app.get('/api/sync-status', (req, res) => {
+  const expected = getLatestCompletedSessionDate(new Date());
+  const current = readCurrentStaticSessionDate();
+  res.json({
+    expectedSession: expected,
+    currentSession: current,
+    isStale: !current || current < expected,
+    syncing: Boolean(activeSyncPromise),
+    lastSyncResult
+  });
+});
+
+app.post('/api/sync-static', (req, res) => {
+  const expected = getLatestCompletedSessionDate(new Date());
+  const current = readCurrentStaticSessionDate();
+  if (current === expected && req.query.force !== '1') {
+    return res.json({
+      expectedSession: expected,
+      currentSession: current,
+      isStale: false,
+      syncing: false,
+      message: 'Already up to date'
+    });
+  }
+  ensureStaticDataFresh(req.query.force === '1');
+  res.status(202).json({
+    expectedSession: expected,
+    currentSession: current,
+    isStale: true,
+    syncing: true,
+    message: 'EOD refresh running in background'
+  });
+});
+
 // Serve static frontend files
 app.use(express.static(WEB_DIR, {
   setHeaders: (res) => {
@@ -131,10 +217,21 @@ app.get('/{*splat}', (req, res) => {
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`MarketEdge Express Backend listening on http://0.0.0.0:${PORT}`);
-  // Warm market data cache asynchronously on startup
-  getMarketData(false)
-    .then(d => console.log(`Initial market snapshot ready: ${d.stocks.length} stocks, session ${d.meta.sessionDate}`))
-    .catch(e => console.warn(`Initial cache warmup failed: ${e.message}`));
+  // Sync static web/data/market.json if stale on startup, else warm memory cache
+  const expected = getLatestCompletedSessionDate(new Date());
+  const current = readCurrentStaticSessionDate();
+  if (!current || current < expected) {
+    ensureStaticDataFresh(true);
+  } else {
+    getMarketData(false)
+      .then(d => console.log(`Initial market snapshot ready: ${d.stocks.length} stocks, session ${d.meta.sessionDate}`))
+      .catch(e => console.warn(`Initial cache warmup failed: ${e.message}`));
+  }
+
+  // Check every 15 minutes if market closed & static web/data/market.json needs EOD update
+  setInterval(() => {
+    ensureStaticDataFresh(false);
+  }, 15 * 60 * 1000).unref();
 });
 
 process.on('SIGTERM', () => {
